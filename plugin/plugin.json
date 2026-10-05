@@ -1,0 +1,33 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "orbit-handoff",
+  "version": "1.0.0",
+  "description": "Carry the important state from one coding session into the next.",
+  "author": { "name": "Shabih Anwar", "url": "https://github.com/shab1h-gh" },
+  "homepage": "https://github.com/shab1h-gh/orbit-handoff",
+  "repository": "https://github.com/shab1h-gh/orbit-handoff",
+  "license": "MIT",
+  "keywords": ["handoff", "codex", "claude-code", "continuity", "developer-tools"],
+  "extensions": {
+    "com.openai": {
+      "interface": {
+        "displayName": "Orbit Handoff",
+        "shortDescription": "Carry coding state forward",
+        "longDescription": "Save an evidence-only handoff of your current coding session: objective and phase, meaningful completed work, actual verification, material decisions, blockers and immediate next steps. Orbit Handoff overwrites a local HANDOFF-STATE.md at the repository root, with a hard limit of 50 lines. Its shell writer validates before an atomic replacement and rejects obvious secret patterns. Requires a local or sandbox repository with a POSIX shell and Git; it has no MCP server, external account or network calls of its own. Invoke handoff explicitly. Repository state and tracked documentation remain authoritative. Pattern checks cannot detect every secret; review the proposed content before saving it.",
+        "developerName": "Shabih Anwar",
+        "category": "Developer Tools",
+        "capabilities": ["Save session handoff", "Preserve verified repository context"],
+        "websiteURL": "https://github.com/shab1h-gh/orbit-handoff",
+        "supportURL": "https://github.com/shab1h-gh/orbit-handoff/issues",
+        "privacyPolicyURL": "https://github.com/shab1h-gh/orbit-handoff/blob/main/PRIVACY.md",
+        "defaultPrompt": ["Save a handoff of this coding session with verified state and immediate next steps."],
+        "brandColor": "#4338CA",
+        "composerIcon": "./assets/icon.png",
+        "logo": "./assets/icon.png"
+      },
+      "publication": {
+        "release_notes": "Initial release: a shared handoff skill, local validated writer and explicit invocation."
+      }
+    }
+  }
+}

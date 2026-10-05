@@ -1,0 +1,17 @@
+{
+  "name": "orbit-handoff",
+  "owner": { "name": "Shabih Anwar" },
+  "metadata": { "description": "Orbit Handoff — coding session continuity", "version": "1.0.0" },
+  "plugins": [
+    {
+      "name": "orbit-handoff",
+      "displayName": "Orbit Handoff",
+      "source": "./plugin",
+      "description": "Carry verified coding state into the next session.",
+      "version": "1.0.0",
+      "author": { "name": "Shabih Anwar" },
+      "category": "development",
+      "tags": ["handoff", "continuity", "skills"]
+    }
+  ]
+}
