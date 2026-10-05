@@ -9,19 +9,26 @@ Orbit Handoff gives Codex and Claude Code a small, reliable way to leave the nex
 session ready to work. Invoke `handoff`, and your agent saves the verified state of
 the session to a local `HANDOFF-STATE.md` — with a hard limit of 50 lines.
 
-## Why I built it
+## Summary
 
-I kept running into the same problem: a productive coding session would end, and
-the next one would spend too long working out where things stood. A transcript
-was too much to read. A vague summary missed the details that mattered.
+Orchestration and planning before implementing a project is not only necessary, but it makes your workflow efficient.
+Having long files appending each change done by each coding session before you /clear or start a new chat to save on 
+context can do the opposite. The new chat still has to read your context file to see what's next, and over time, it 
+can become bloated and it becomes the same problem you were trying to solve.
 
-I wanted a handoff that answered a few practical questions. What are we trying to
+This gives you a handoff that answers a few practical questions. What are we trying to
 finish? What actually changed? What did we test? What is blocked? What should
 happen next?
 
-Orbit Handoff makes the workflow I use publicly installable. It keeps the working
+Orbit Handoff makes the workflow more efficient. It keeps the working
 context small enough to read, and leaves the repository and its tracked
-documentation in charge.
+documentation in charge. Paired with your original architecture, design
+and roadmap Markdown files, it creates a very dynamic token efficient workflow.
+
+You can use both Codex and Claude on the same project, and they will both have the
+last summary and the immediate next steps from the HANDOFF-STATE.MD file. Since
+both use AGENTS.md, add a simple line to read HANDOFF-STATE.md before starting
+any work, and your coding sessions will now be in sync.
 
 ## How it works
 
