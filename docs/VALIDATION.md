@@ -1,8 +1,10 @@
-# v1.0.0 validation record
+# Release validation record
 
 Checks performed on 5 October 2026, using disposable Git repositories.
 
-## Automated tests
+## Original v1.0.0 checks
+
+### Automated tests
 
 All 26 tests passed locally on macOS with Node.js 24. Tests cover first creation,
 overwrite, exactly 50 lines, 51-line rejection, final lines with and without a
@@ -20,7 +22,7 @@ CI ran the suite, local package validation, source scan, ZIP build and npm pack
 on macOS/Linux with Node.js 20 and 24. All four jobs passed in the
 [initial public CI run](https://github.com/shab1h-gh/orbit-handoff/actions/runs/37254076291).
 
-## Native discovery and packaging
+### Native discovery and packaging
 
 - Codex CLI 0.160.0 returned the installed `handoff` from its native `skills/list`
   API, with display name Orbit Handoff and a `$handoff` default prompt.
@@ -48,14 +50,63 @@ on macOS/Linux with Node.js 20 and 24. All four jobs passed in the
 
 ## Publication limits
 
-The exact npm name was available and publisher authentication was confirmed.
-`npm publish` was attempted and rejected with `E403`: publishing requires
-two-factor authentication. No security settings were weakened. The prepared
-tarball is ready, but registry publication and `npx orbit-handoff@latest install`
-remain unverified until the publisher completes that step. See
-[PUBLISHING.md](PUBLISHING.md) for the exact command.
+`orbit-handoff@1.0.0` was successfully published manually. Public registry
+verification on 5 October 2026 confirmed version 1.0.0, `latest` resolving to
+1.0.0 before the patch release, and repository/homepage/issue metadata pointing
+to `shab1h-gh/orbit-handoff`. The previous failed publication attempt is stale
+history; the registry package is available.
 
 Neither OpenAI nor Anthropic public directory submission has been made.
 Provider review, identity verification and portal checks remain publisher steps.
 Native Windows, WSL-specific operation and ordinary ChatGPT execution are
 unverified; the supported runtime is macOS/Linux with a POSIX shell.
+
+## v1.0.1 patch verification
+
+The patch changes documentation and release version metadata only. No installer,
+canonical skill, writer, tests or packaging logic changed.
+
+### Public v1.0.0 smoke test
+
+Downloaded the actual public package with an isolated npm cache and ran
+`npx orbit-handoff@1.0.0 install --agent both --scope project --yes` in a disposable
+Git repository on macOS with Node.js 24.16.0 and npm 12.0.2. Verified:
+
+- Codex and Claude installs contain byte-identical skill files and ownership metadata.
+- The npm CLI has executable permissions. Installed writers are mode 0644 and
+  execute through `sh`, matching the canonical skill's invocation contract.
+- `check` succeeds after install; `init` preserves existing AGENTS.md, CLAUDE.md
+  and .gitignore content, records ownership and ignores HANDOFF-STATE.md.
+- Reinstall and repeated init preserve bytes and add no duplicate blocks.
+- Init creates no handoff. The writer creates and atomically replaces the file
+  with restrictive permissions; empty and 51-line inputs preserve the valid file.
+- No writer temporary files remain. Uninstall restores original configuration,
+  removes unchanged owned skills, and preserves unrelated files and the handoff.
+- Edited skills and continuity blocks survive uninstall; check and reinstall
+  report edited files with failure status rather than overwriting them.
+
+This smoke test exercises the CLI and shell workflow. It does not claim a new
+native agent discovery test or an authenticated agent-driven handoff.
+
+### Local checks and packed v1.0.1 smoke test
+
+- All 26 existing tests passed on macOS with Node.js 24.16.0.
+- `npm run validate`, `npm run scan:public` and `npm run build:plugin` passed.
+- Claude Code 2.1.289 passed both `claude plugin validate ./plugin --strict` and
+  `claude plugin validate . --strict` for the updated manifests.
+- The portable manifest passed the official Agent Plugins 1.0.0 JSON Schema
+  with Ajv's draft-2020 validator and format checks.
+- `npm pack --dry-run` and `npm pack` succeeded using a disposable cache.
+  The tarball contains 20 intended files, an executable CLI, version 1.0.1 and
+  the corrected README. No dependencies, credentials or build residue are included.
+- The submission ZIP passed its integrity check and both extracted archives
+  passed the public/privacy scanner. No private paths or unwanted files were found.
+- The packed 1.0.1 CLI passed the same disposable-repository install, check,
+  init, reinstall, handoff and uninstall smoke test described above, including
+  edited-content preservation and executable permissions.
+- Complete diff review confirmed that runtime code and canonical skill bytes
+  are unchanged. The v1.0.0 tag and release remain untouched.
+
+These are pre-publication checks. After publication, verify `latest` resolves to
+1.0.1 and repeat the public-registry smoke test; report its result in the GitHub
+release. The original CI result above covers v1.0.0; it is not a new 1.0.1 CI claim.

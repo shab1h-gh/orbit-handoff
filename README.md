@@ -79,9 +79,10 @@ For unattended setup:
 npx orbit-handoff install --agent both --scope project --yes
 ```
 
-The v1.0.0 npm package is prepared, but publication is awaiting npm's 2FA step.
-The registry command above is unavailable until publication succeeds. Use a
-source checkout in the meantime:
+Orbit Handoff is published on npm. The commands above install the public package.
+There is no postinstall script that silently changes a project.
+
+For development from a source checkout:
 
 ```sh
 git clone https://github.com/shab1h-gh/orbit-handoff.git
@@ -89,8 +90,7 @@ cd orbit-handoff
 npm link
 ```
 
-Then run `orbit-handoff install` from the project you want to configure. There is
-no postinstall script that silently changes a project.
+Then run `orbit-handoff install` from the project you want to configure.
 
 ### Project or user installation?
 

@@ -5,8 +5,8 @@ approval or listing is implied by local validation.
 
 ## OpenAI public Plugins Directory
 
-Release artifact: `orbit-handoff-plugin-1.0.0.zip`. Build it with
-`npm run build:plugin`; the output is `dist/orbit-handoff-plugin-1.0.0.zip`.
+Release artifact: `orbit-handoff-plugin-1.0.1.zip`. Build it with
+`npm run build:plugin`; the output is `dist/orbit-handoff-plugin-1.0.1.zip`.
 The ZIP has portable `plugin.json` at its root, `skills/handoff`, OpenAI interface
 metadata, a real PNG icon and the Claude compatibility manifest. It contains no
 MCP server, hooks or account configuration. The category is Developer Tools.
@@ -36,7 +36,7 @@ plugin itself. The host agent still needs its normal authentication.
 
 The public GitHub marketplace is separate from Anthropic directory approval.
 Repository: `shab1h-gh/orbit-handoff`. Plugin folder: `plugin`. Release tag:
-`v1.0.0`. Validate with:
+`v1.0.1`. Validate with:
 
 ```sh
 claude plugin validate ./plugin --strict
@@ -49,7 +49,7 @@ is the developer portal, replacing earlier submission forms:
 1. Open [the developer portal](https://claude.ai/directory/manage) with an eligible
    paid plan/role and connect the GitHub account that can push to this repository.
 2. Select **Submit new → Plugin bundle**. Enter `shab1h-gh/orbit-handoff`, plugin
-   path `plugin`, and tag `v1.0.0` for this immutable release (or `main` if you want
+   path `plugin`, and tag `v1.0.1` for this immutable release (or `main` if you want
    future branch updates reviewed).
 3. Run **Validate**, resolve blocking findings and check the listing details.
 4. Complete data-handling questions, the publisher contact email and compliance

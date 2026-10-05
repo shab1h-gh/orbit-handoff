@@ -1,7 +1,7 @@
 {
   "name": "orbit-handoff",
   "displayName": "Orbit Handoff",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Carry the important state from one coding session into the next with a verified handoff of at most 50 lines.",
   "author": { "name": "Shabih Anwar", "url": "https://github.com/shab1h-gh" },
   "homepage": "https://github.com/shab1h-gh/orbit-handoff",

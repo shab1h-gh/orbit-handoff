@@ -1,6 +1,6 @@
 {
   "name": "orbit-handoff",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Carry the important state from one coding session into the next.",
   "type": "module",
   "bin": { "orbit-handoff": "bin/orbit-handoff.mjs" },
