@@ -3,6 +3,7 @@
 **Carry the important state from one coding session into the next.**
 
 [![Licence: MIT](https://img.shields.io/badge/licence-MIT-blue.svg)](LICENSE)
+[![CI](https://github.com/shab1h-gh/orbit-handoff/actions/workflows/ci.yml/badge.svg)](https://github.com/shab1h-gh/orbit-handoff/actions/workflows/ci.yml)
 
 Orbit Handoff gives Codex and Claude Code a small, reliable way to leave the next
 session ready to work. Invoke `handoff`, and your agent saves the verified state of
@@ -78,8 +79,9 @@ For unattended setup:
 npx orbit-handoff install --agent both --scope project --yes
 ```
 
-If the npm release is still awaiting publisher authentication, install the
-prepared CLI from the GitHub checkout instead:
+The v1.0.0 npm release is awaiting publisher authentication. Until it is published,
+the registry command above is unavailable. Use the prepared CLI from the GitHub
+checkout instead:
 
 ```sh
 git clone https://github.com/shab1h-gh/orbit-handoff.git

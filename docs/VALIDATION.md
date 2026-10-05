@@ -16,9 +16,9 @@ in a disposable home, init idempotency and block upgrades, ignore rules, existin
 instructions, edited files/blocks, unrelated files/directories, symlinks and
 invalid ownership paths. No live user installation is altered by these tests.
 
-CI runs the suite, local package validation, source scan, ZIP build and npm pack
-on macOS/Linux with Node.js 20 and 24. Remote results are available in GitHub
-Actions; local success alone does not establish a remote CI result.
+CI ran the suite, local package validation, source scan, ZIP build and npm pack
+on macOS/Linux with Node.js 20 and 24. All four jobs passed in the
+[initial public CI run](https://github.com/shab1h-gh/orbit-handoff/actions/runs/37254076291).
 
 ## Native discovery and packaging
 
@@ -28,6 +28,8 @@ Actions; local success alone does not establish a remote CI result.
   `claude plugin validate . --strict`.
 - A local marketplace install succeeded. `claude plugin details orbit-handoff`
   reported one `handoff` skill, zero agents/hooks/MCP/LSP servers.
+- A second isolated configuration installed `orbit-handoff@orbit-handoff` from
+  `shab1h-gh/orbit-handoff` on GitHub and reported version 1.0.0 enabled.
 - Claude startup's `slash_commands` and `skills` arrays contained
   `orbit-handoff:handoff`; its plugin metadata reported version 1.0.0.
 - A standalone Claude project install registered and loaded `handoff`, confirming
