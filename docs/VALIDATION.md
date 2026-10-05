@@ -48,10 +48,12 @@ on macOS/Linux with Node.js 20 and 24. All four jobs passed in the
 
 ## Publication limits
 
-The exact npm name was available, but `npm whoami` returned `ENEEDAUTH` during
-release preparation. Until npm publication succeeds, the registry-based
-`npx orbit-handoff install` route is unverified. The prepared tarball and GitHub
-checkout provide the tested CLI; see [PUBLISHING.md](PUBLISHING.md).
+The exact npm name was available and publisher authentication was confirmed.
+`npm publish` was attempted and rejected with `E403`: publishing requires
+two-factor authentication. No security settings were weakened. The prepared
+tarball is ready, but registry publication and `npx orbit-handoff@latest install`
+remain unverified until the publisher completes that step. See
+[PUBLISHING.md](PUBLISHING.md) for the exact command.
 
 Neither OpenAI nor Anthropic public directory submission has been made.
 Provider review, identity verification and portal checks remain publisher steps.

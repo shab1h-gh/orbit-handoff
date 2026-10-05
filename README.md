@@ -79,9 +79,9 @@ For unattended setup:
 npx orbit-handoff install --agent both --scope project --yes
 ```
 
-The v1.0.0 npm release is awaiting publisher authentication. Until it is published,
-the registry command above is unavailable. Use the prepared CLI from the GitHub
-checkout instead:
+The v1.0.0 npm package is prepared, but publication is awaiting npm's 2FA step.
+The registry command above is unavailable until publication succeeds. Use a
+source checkout in the meantime:
 
 ```sh
 git clone https://github.com/shab1h-gh/orbit-handoff.git
