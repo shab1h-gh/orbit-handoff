@@ -1,8 +1,8 @@
 {
   "name": "orbit-handoff",
   "displayName": "Orbit Handoff",
-  "version": "1.0.1",
-  "description": "Carry the important state from one coding session into the next with a verified handoff of at most 50 lines.",
+  "version": "1.1.0",
+  "description": "Set up token-efficient project continuity and carry verified coding state between sessions.",
   "author": { "name": "Shabih Anwar", "url": "https://github.com/shab1h-gh" },
   "homepage": "https://github.com/shab1h-gh/orbit-handoff",
   "repository": "https://github.com/shab1h-gh/orbit-handoff",
@@ -11,6 +11,6 @@
   "documentationUrl": "https://github.com/shab1h-gh/orbit-handoff#readme",
   "supportUrl": "https://github.com/shab1h-gh/orbit-handoff/issues",
   "privacyPolicyUrl": "https://github.com/shab1h-gh/orbit-handoff/blob/main/PRIVACY.md",
-  "keywords": ["handoff", "continuity", "developer-tools"],
+  "keywords": ["handoff", "continuity", "project-setup", "developer-tools"],
   "skills": "./skills/"
 }

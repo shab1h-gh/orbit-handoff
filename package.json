@@ -1,7 +1,7 @@
 {
   "name": "orbit-handoff",
-  "version": "1.0.1",
-  "description": "Carry the important state from one coding session into the next.",
+  "version": "1.1.0",
+  "description": "Set up token-efficient coding continuity and carry verified state between sessions.",
   "type": "module",
   "bin": { "orbit-handoff": "bin/orbit-handoff.mjs" },
   "engines": { "node": ">=20" },
@@ -11,7 +11,7 @@
   "repository": { "type": "git", "url": "git+https://github.com/shab1h-gh/orbit-handoff.git" },
   "homepage": "https://github.com/shab1h-gh/orbit-handoff#readme",
   "bugs": { "url": "https://github.com/shab1h-gh/orbit-handoff/issues" },
-  "keywords": ["codex", "claude-code", "agent-skills", "handoff", "continuity"],
+  "keywords": ["codex", "claude-code", "agent-skills", "handoff", "continuity", "project-setup", "context-efficiency"],
   "files": ["bin/", "lib/", "plugin/", "docs/", "README.md", "LICENSE", "SECURITY.md", "PRIVACY.md", "CONTRIBUTING.md", "CHANGELOG.md"],
   "scripts": {
     "test": "node --test",
