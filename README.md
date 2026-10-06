@@ -1,153 +1,180 @@
 # Orbit Handoff
 
-**Carry the important state from one coding session into the next.**
+**Set up lean project continuity, then carry the important state from one coding session into the next.**
 
 [![Licence: MIT](https://img.shields.io/badge/licence-MIT-blue.svg)](LICENSE)
 [![CI](https://github.com/shab1h-gh/orbit-handoff/actions/workflows/ci.yml/badge.svg)](https://github.com/shab1h-gh/orbit-handoff/actions/workflows/ci.yml)
 
-Orbit Handoff gives Codex and Claude Code a small, reliable way to leave the next
-session ready to work. Invoke `handoff`, and your agent saves the verified state of
-the session to a local `HANDOFF-STATE.md` — with a hard limit of 50 lines.
+Orbit Handoff is a small local workflow for Codex and Claude Code with two skills:
 
-## Summary
+- **Orbit Setup** prepares a project with lightweight living documentation and token-efficient agent rules.
+- **Orbit Handoff** keeps one short `HANDOFF-STATE.md` current so a fresh session can resume without carrying a huge chat history.
 
-Orchestration and planning before implementing a project is not only necessary, but it makes your workflow efficient.
-Having long files appending each change done by each coding session before you /clear or start a new chat to save on 
-context can do the opposite. The new chat still has to read your context file to see what's next, and over time, it 
-can become bloated and it becomes the same problem you were trying to solve.
+The repository, Git history and tracked project documentation stay authoritative. The handoff is current execution state, not a changelog.
 
-This gives you a handoff that answers a few practical questions. What are we trying to
-finish? What actually changed? What did we test? What is blocked? What should
-happen next?
+## Why I built it
 
-Orbit Handoff makes the workflow more efficient. It keeps the working
-context small enough to read, and leaves the repository and its tracked
-documentation in charge. Paired with your original architecture, design
-and roadmap Markdown files, it creates a very dynamic token efficient workflow.
+Long coding sessions eventually become expensive to carry forward. A giant progress file has the same problem: every new session still has to read the accumulated history.
 
-You can use both Codex and Claude on the same project, and they will both have the
-last summary and the immediate next steps from the HANDOFF-STATE.MD file. Since
-both use AGENTS.md, add a simple line to read HANDOFF-STATE.md before starting
-any work, and your coding sessions will now be in sync.
+Orbit Handoff uses a different model:
 
-## How it works
+1. Keep durable product, design, architecture, security and roadmap truth in small living documents.
+2. Update those documents **in place** when the current truth changes.
+3. Keep temporary execution state in one concise `HANDOFF-STATE.md`.
+4. Overwrite that handoff at meaningful checkpoints instead of appending history.
+5. Start a fresh session from Git + the handoff + only the relevant living docs.
 
-1. Explicitly invoke the skill at the end of a coding session.
-2. Your agent checks the current Git state and reconciles the previous handoff
-   with evidence from the session.
-3. It sends a concise Markdown handoff to the bundled shell writer.
-4. The writer validates the content, then atomically replaces `HANDOFF-STATE.md`
-   at the repository root. The agent confirms the line count and first next step.
+That makes `/clear`, a new Codex thread, or a usage-window reset much cheaper to recover from.
 
-The file is created on the first successful handoff. Each later handoff overwrites
-it. Failed validation leaves the last valid handoff intact.
+## Quick start
 
-### Why 50 lines?
+From the project you want to configure:
 
-A handoff should help you resume work quickly. Fifty lines is a hard cap; around
-30 is usually enough. The limit encourages useful decisions, real verification
-and immediate next steps. It keeps resolved issues and repeated history out of
-the next session.
+```sh
+npx orbit-handoff install
+npx orbit-handoff setup
+```
 
-Durable architecture, security and roadmap decisions still belong in tracked
-project documentation. The handoff is local working context, not the only place
-an important decision should live.
+Choose Codex, Claude Code or both when prompted.
 
-## Features
+You can also run non-interactively:
 
-- One canonical skill for Codex, Claude Code and native plugin packaging.
-- Evidence-only state: objective and phase, completed work, verification,
-  decisions, blockers and concrete next steps.
-- A 50-line limit, including a final line without a trailing newline.
-- Empty-input and obvious-secret rejection, with line numbers rather than
-  matched secret text in error messages.
-- Same-directory atomic replacement and temporary-file cleanup.
-- No network calls or Git mutations from the handoff writer.
-- An interactive, dependency-free installer with project and user scopes.
-- Ownership-aware updates and uninstall, plus optional continuity configuration.
+```sh
+npx orbit-handoff install --agent both --scope project --yes
+npx orbit-handoff setup --agent both --yes
+```
+
+Then use the skills directly:
+
+| Agent | Setup | Handoff |
+| --- | --- | --- |
+| Codex standalone | `$orbit-setup` | `$handoff` |
+| Claude Code standalone | `/orbit-setup` | `/handoff` |
+| Claude plugin | `/orbit-handoff:orbit-setup` | `/orbit-handoff:handoff` |
+
+## Orbit Setup
+
+Run Orbit Setup **before the first substantial coding prompt**, or later to upgrade an existing project.
+
+It creates only missing living-doc templates, preferring `docs/`:
+
+```text
+docs/
+├── PRODUCT.md
+├── DESIGN.md
+├── ARCHITECTURE.md
+├── SECURITY.md
+└── ROADMAP.md
+```
+
+If an equivalent file already exists at the repository root or in `docs/`, Orbit preserves it instead of creating a duplicate.
+
+It also manages a small Orbit block in:
+
+- `AGENTS.md`
+- `CLAUDE.md` when Claude is selected
+- `.gitignore`
+
+The managed rules tell the agent to:
+
+- load only the project context relevant to the current task;
+- treat living docs as current truth, not session history;
+- update affected living docs in place as soon as completed work changes that truth;
+- keep Git as history;
+- default to no subagents, use at most two when genuinely useful, and never recurse;
+- run the smallest relevant verification before claiming completion;
+- run Orbit Handoff after meaningful verified milestones and after completed coding tasks that changed repository state or durable project truth;
+- checkpoint before `/clear`, session end, or a usage/context stop when warning is available;
+- recover from `HANDOFF-STATE.md` + Git + only the relevant living docs rather than reconstructing old conversation history.
+
+Orbit Setup does **not** create `HANDOFF-STATE.md`. The handoff skill creates it on the first successful checkpoint.
+
+### Existing project files are preserved
+
+Orbit Setup does not replace an existing `PRODUCT.md`, `DESIGN.md`, `ARCHITECTURE.md`, `SECURITY.md` or `ROADMAP.md` just to standardise layout.
+
+The living docs it creates become ordinary project files. Orbit uninstall does not delete them.
+
+## Orbit Handoff
+
+Orbit Handoff writes one evidence-only `HANDOFF-STATE.md` at the project root.
+
+It records only the current information the next session needs:
+
+- current objective;
+- meaningful completed milestones;
+- in-progress work;
+- current state;
+- material decisions;
+- open risks/blockers;
+- immediate next steps;
+- actual verification.
+
+The file has a **hard cap of 50 lines** and is normally around 30.
+
+Each successful checkpoint **overwrites** the previous one. It never appends a chronological session log.
+
+The writer:
+
+- rejects empty input;
+- rejects more than 50 lines;
+- rejects obvious secret-like content;
+- writes atomically;
+- preserves the previous valid handoff after failed validation;
+- makes no network calls;
+- does not stage, commit, amend or push Git.
+
+## Automatic checkpoints
+
+Version 1.1 removes the old explicit-only invocation restriction.
+
+The canonical handoff skill no longer has Claude's `disable-model-invocation: true`, and OpenAI skill metadata allows implicit invocation.
+
+When a project has been configured with Orbit Setup, the project rules ask the agent to run Handoff:
+
+- after a completed coding task that changed repository state or durable project truth;
+- after a meaningful, verified milestone in a longer task;
+- before a deliberate context clear or session end;
+- before a usage/context stop when the agent has warning.
+
+This is intentionally **not** after every tiny edit or read-only question.
+
+You can still invoke the handoff manually at any time.
 
 ## Installation
 
-You need Node.js 20 or newer for the npm CLI, Git, and a POSIX shell with `awk`,
-`grep`, `mktemp` and standard Unix utilities. macOS and Linux are supported.
+Requirements:
+
+- Node.js 20+ for the npm installer/manager;
+- Git for normal repository workflows;
+- a POSIX shell and standard Unix utilities for the handoff writer.
+
+macOS and Linux are supported. Native Windows is not currently supported; WSL is the expected route.
+
+### Standalone Codex and Claude Code
 
 ```sh
 npx orbit-handoff install
 ```
 
-Choose **Codex**, **Claude Code** or **Both**, then choose **Current project** or
-**User/global**. The installer shows the destinations and asks before writing.
-For a project inside a Git repository, it installs at the repository root,
-including when you run it from a subdirectory.
+Project installs create both skills under the selected agent:
 
-For unattended setup:
+| Agent | Project location |
+| --- | --- |
+| Codex | `.agents/skills/handoff/` and `.agents/skills/orbit-setup/` |
+| Claude Code | `.claude/skills/handoff/` and `.claude/skills/orbit-setup/` |
 
-```sh
-npx orbit-handoff install --agent both --scope project --yes
-```
+User/global installs use the corresponding `~/.agents/skills/` or `~/.claude/skills/` locations.
 
-Orbit Handoff is published on npm. The commands above install the public package.
-There is no postinstall script that silently changes a project.
-
-For development from a source checkout:
+After installation, run:
 
 ```sh
-git clone https://github.com/shab1h-gh/orbit-handoff.git
-cd orbit-handoff
-npm link
+npx orbit-handoff setup
 ```
 
-Then run `orbit-handoff install` from the project you want to configure.
+`npx orbit-handoff init` remains a backwards-compatible alias for `setup`.
 
-### Project or user installation?
-
-| Agent | Current project | User/global |
-| --- | --- | --- |
-| Codex | `.agents/skills/handoff/` | `~/.agents/skills/handoff/` |
-| Claude Code | `.claude/skills/handoff/` | `~/.claude/skills/handoff/` |
-
-A project install travels with that repository if you commit the skill files. A
-user install makes the skill available across your local projects. These are the
-locations documented by [Codex](https://learn.chatgpt.com/docs/build-skills) and
-[Claude Code](https://code.claude.com/docs/en/skills). The installed skill files
-are byte-identical for both agents.
-
-Choose one route per agent where possible. Installing both a standalone skill
-and a plugin can give you duplicate entries in the skill menu.
-
-### Codex
-
-```sh
-npx orbit-handoff install --agent codex --scope project --yes
-npx orbit-handoff init --agent codex --yes
-```
-
-At the end of a session, invoke:
-
-```text
-$handoff
-```
-
-The native skill metadata disables implicit invocation. If the skill does not
-appear after installation, restart Codex.
-
-### Claude Code standalone skill
-
-```sh
-npx orbit-handoff install --agent claude --scope project --yes
-npx orbit-handoff init --agent claude --yes
-```
-
-Invoke:
-
-```text
-/handoff
-```
-
-The skill uses `disable-model-invocation: true`, so Claude does not decide to run
-it on its own. Restart Claude Code or reload skills if needed.
-
-### Claude marketplace plugin
+### Claude GitHub marketplace route
 
 Inside Claude Code:
 
@@ -156,201 +183,162 @@ Inside Claude Code:
 /plugin install orbit-handoff@orbit-handoff
 ```
 
-You can also discover Orbit Handoff through `/plugin` after adding the marketplace.
-The equivalent shell commands are:
+Equivalent shell commands:
 
 ```sh
 claude plugin marketplace add shab1h-gh/orbit-handoff
 claude plugin install orbit-handoff@orbit-handoff
 ```
 
-The plugin registers this namespaced skill command:
+This GitHub marketplace route is separate from Anthropic's official/public directory. A plugin can install successfully from the GitHub marketplace without appearing in Claude's public Skills/Plugins marketplace.
+
+The plugin exposes namespaced commands:
 
 ```text
+/orbit-handoff:orbit-setup
 /orbit-handoff:handoff
 ```
 
-That registration was checked with Claude Code 2.1.289. The standalone skill is
-`/handoff`; the plugin has the namespace shown above. Plugin installation does not
-configure your repository's continuity instructions. Run `npx orbit-handoff init
---agent claude --yes` if you want those too.
-
 ### OpenAI / ChatGPT / Codex plugin
 
-Orbit Handoff includes a skills-only portable Agent Plugin, with OpenAI listing
-metadata and an icon. It needs no MCP server or external account.
+The repository includes a portable skills-only Agent Plugin package with no MCP server or external account.
 
-**It has not been submitted to or approved for the public OpenAI Plugins
-Directory.** Once a listing is approved and published, you will be able to find
-Orbit Handoff in Plugins and install it on supported surfaces. Until then, use the
-Codex standalone route. The validated submission ZIP is attached to the GitHub
-release; [submission guidance](docs/SUBMISSION.md) explains the publisher steps.
+Public directory approval is separate from GitHub/npm distribution. If you have submitted Orbit Handoff to OpenAI, the **publisher dashboard is the authoritative place to check its review status**. A working npm/Codex installation does not prove that the ChatGPT Plugins Directory submission has been accepted.
 
-The plugin needs a repository and shell access. Installing it in an ordinary
-conversation without that environment cannot save a repository handoff.
-
-## Configure continuity in a repository
-
-Run this from your repository:
-
-```sh
-npx orbit-handoff init
-```
-
-`init` shows its proposed changes, then adds a delimited Orbit Handoff block to
-`AGENTS.md`, `CLAUDE.md`, or both. It also adds the exact `HANDOFF-STATE.md` ignore
-entry if neither that entry nor `/HANDOFF-STATE.md` is already present. Existing
-content is preserved. Running it again makes no duplicate blocks.
-
-The managed instructions tell the agent to read the handoff at session start,
-inspect Git and relevant tracked documentation, and treat the repository and
-tracked docs as authoritative. They only permit a handoff update when you
-explicitly invoke the skill.
-
-`init` requires a Git repository. It does not create `HANDOFF-STATE.md`. It records
-the exact additions in `.orbit-handoff/state.json` so uninstall can distinguish
-its changes from yours. Keep this ownership file alongside the instructions if
-you commit them. An ignore rule does not remove an already tracked file from Git.
+See [docs/SUBMISSION.md](docs/SUBMISSION.md).
 
 ## Commands
 
 | Command | What it does |
 | --- | --- |
-| `npx orbit-handoff install` | Choose agent and scope, then install the canonical skill. |
-| `npx orbit-handoff init` | Configure continuity in the current repository. |
-| `npx orbit-handoff check` | Report selected installations, continuity blocks and handoff ignore status. |
-| `npx orbit-handoff@latest update` | Replace unchanged managed skill files with the running package version. |
-| `npx orbit-handoff uninstall` | Remove unchanged owned files and project continuity blocks. |
+| `npx orbit-handoff install` | Install both Orbit skills for the selected agent(s). |
+| `npx orbit-handoff setup` | Prepare/upgrade the current project workflow and living docs. |
+| `npx orbit-handoff init` | Backwards-compatible alias for `setup`. |
+| `npx orbit-handoff check` | Report installed skill state and project continuity status. |
+| `npx orbit-handoff@latest update` | Upgrade unchanged managed skill files to the running package version. |
+| `npx orbit-handoff uninstall` | Remove managed skills and managed instruction blocks while preserving user-owned docs/state. |
 
-Options: `--agent codex|claude|both`, `--scope project|user`, and `--yes` (`-y`).
-Non-interactive commands default to both agents and project scope. `check` needs
-no confirmation and exits with status 1 if a selected installation is missing,
-modified or differs from the running package. Use `--scope user` to check or manage
-user installs. `init` always configures the current repository.
+Options:
+
+```text
+--agent codex|claude|both
+--scope project|user
+--yes
+```
+
+## Updating an existing installation
+
+For npm/standalone installations:
+
+```sh
+npx orbit-handoff@latest update --agent both --scope project --yes
+npx orbit-handoff@latest setup --agent both --yes
+```
+
+The first command upgrades the installed skills. The second upgrades the project's managed Orbit rules and creates any missing living-doc templates.
+
+Existing edited managed skill files are not force-overwritten.
+
+For the Claude GitHub marketplace route:
+
+```sh
+claude plugin update orbit-handoff@orbit-handoff
+```
+
+Then run the updated setup skill in the project:
+
+```text
+/orbit-handoff:orbit-setup
+```
 
 ## What a handoff looks like
-
-This is a generic example. Actual handoffs are generated from the evidence in
-your current session; they do not inherit these claims or test results.
 
 ```markdown
 # Handoff State
 
-## Objective
-Complete the authentication settings UI and verify the account-security flow.
-Phase: completing passkey support and browser verification.
+Updated: 06-10-2026 22:40
 
-## Completed
-- Added the settings route and reusable account-security components.
-- Connected password-change and session-revocation flows.
-- Updated the design tokens used by the new settings screens.
+## Current objective
+- Finish account-security settings and browser verification.
 
-## Verified
-- Typecheck passed.
-- Unit tests passed: 42/42.
-- Production build completed successfully.
+## Completed milestones
+- Added the settings route and account-security components.
+- Connected password change and session revocation.
+
+## In progress
+- Passkey-management UI.
 
 ## Decisions
 - Keep session management server-side.
-- Reuse the existing form validation layer rather than adding another dependency.
 
-## Risks / Blockers
+## Open issues / risks
 - Passkey removal still needs an end-to-end browser test.
 
-## Next
-1. Add the passkey-management UI.
+## Immediate next steps
+1. Finish passkey management.
 2. Run the browser authentication suite.
-3. Review the completed settings flow before release.
+
+## Verification
+- Typecheck passed.
+- Unit tests passed: 42/42.
 ```
 
-The skill's normal format also includes an update time and current state. Empty
-sections are omitted. A test is only recorded as passed when it actually ran.
+Actual handoffs are generated only from current evidence.
 
 ## Security and privacy
 
-The handoff runtime works locally. Its shell writer reads stdin, validates the
-content, and replaces one file. It has no network calls and does not commit,
-stage, amend or push anything. The previous valid handoff survives rejected
-content, and the temporary file is removed. New handoff files use restrictive
-permissions from `mktemp`.
+Orbit Handoff is local-first.
 
-Secret detection catches recognisable patterns, including private keys and common
-token formats. It cannot catch every secret or piece of personal data. Review
-what the agent proposes. Keep credentials, environment values and sensitive
-production data out of the handoff.
+The handoff writer has no network calls and does not mutate Git. Secret-pattern detection is a backstop, not a guarantee, so credentials and sensitive production data should never be placed in a handoff or project documentation.
 
-The installer refuses to overwrite an unmanaged `handoff` skill or locally
-modified managed files. Uninstall preserves edited files, unrelated files and
-edited continuity blocks. It does not delete `HANDOFF-STATE.md`. Retained ownership
-records make preserved edits visible to later checks.
+The installer refuses to overwrite unmanaged skill directories or modified managed files. Setup preserves unrelated instructions and existing project docs.
 
-There is no telemetry. Downloading through npm or a marketplace still uses the
-relevant registry or Git host, and your agent's model calls follow its provider's
-privacy settings. See [SECURITY.md](SECURITY.md) and [PRIVACY.md](PRIVACY.md).
+There is no telemetry in Orbit Handoff itself. npm, GitHub, Claude and OpenAI still operate under their own service/privacy policies.
 
-## Updating and uninstalling
+See [SECURITY.md](SECURITY.md) and [PRIVACY.md](PRIVACY.md).
 
-Fetch the latest CLI when updating — `update` itself does not contact npm:
+## Uninstalling
 
-```sh
-npx orbit-handoff@latest update --agent both --scope project --yes
-```
-
-If you have edited installed files, the update stops so you can preserve and
-review those changes. It does not force an overwrite.
+Standalone:
 
 ```sh
 npx orbit-handoff uninstall --agent both --scope project --yes
 npx orbit-handoff uninstall --agent both --scope user --yes
 ```
 
-For the Claude marketplace route:
+Claude marketplace:
 
 ```sh
-claude plugin update orbit-handoff@orbit-handoff
 claude plugin uninstall orbit-handoff@orbit-handoff
 ```
 
-The npm uninstall command manages npm-installed skills and its own continuity
-blocks. Claude manages the marketplace-installed plugin separately.
-
-## Compatibility
-
-The writer needs a POSIX shell, Git and standard Unix utilities; it has no Node.js
-dependency. The npm CLI needs Node.js 20+. CI covers macOS and Linux on Node.js
-20 and 24. Native Windows is not supported; WSL provides the Linux environment.
-WSL has not been separately tested for this release.
-
-Provider discovery and plugin features depend on the agent version. The Claude
-plugin and marketplace were validated with 2.1.289. OpenAI directory acceptance
-and ordinary ChatGPT use are unverified until submission and review. See the
-[release validation record](docs/VALIDATION.md) for the checks actually performed.
+Orbit uninstall removes its managed skills and managed instruction blocks. It does not delete the living project documentation created during setup or `HANDOFF-STATE.md`.
 
 ## Project layout
 
 ```text
 orbit-handoff/
-├── bin/                       npm CLI entry point
-├── lib/                       Installer and continuity management
+├── bin/                         npm CLI
+├── lib/                         installer/update management
 ├── plugin/
-│   ├── plugin.json            Portable Agent Plugin and OpenAI listing
-│   ├── .claude-plugin/        Claude plugin manifest
-│   ├── assets/                Listing icon
-│   └── skills/handoff/        One canonical skill and shell writer
-├── .claude-plugin/            GitHub-hosted Claude marketplace
-├── scripts/                   Validation, privacy scan and ZIP packaging
-├── tests/                     Disposable runtime and installer tests
-├── docs/                      Publication guidance and validation evidence
-└── .github/workflows/         macOS and Linux CI
+│   ├── plugin.json              portable/OpenAI plugin metadata
+│   ├── .claude-plugin/          Claude plugin manifest
+│   ├── assets/
+│   └── skills/
+│       ├── orbit-setup/         project bootstrap + setup script
+│       └── handoff/             checkpoint skill + writer
+├── .claude-plugin/              GitHub-hosted Claude marketplace
+├── scripts/                     validation, scanning and packaging
+├── tests/
+├── docs/
+└── .github/workflows/
 ```
 
-The two plugin manifests share the same skill directory. There is no separate
-Codex or Claude implementation to drift apart.
+Both providers use the same canonical skill directories, avoiding divergent Codex/Claude implementations.
 
 ## Contributing
 
-Issues and focused pull requests are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md)
-for the development checks and the handoff contract to preserve.
+Issues and focused pull requests are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Licence
 
