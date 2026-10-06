@@ -91,7 +91,9 @@ test('existing user-authored ignore rule is neither duplicated nor removed', t =
   const original = '# Local state\nHANDOFF-STATE.md\n';
   fs.writeFileSync(path.join(root, '.gitignore'), original);
   ok(run(root, 'init', '--yes'));
-  assert.equal(read(root, '.gitignore'), original);
+  assert.equal(read(root, '.gitignore').startsWith(original), true);
+  assert.equal(read(root, '.gitignore').includes('.orbit-thread/state.json'), true);
+  assert.equal((read(root, '.gitignore').match(/orbit-thread:start/g) ?? []).length, 1);
   ok(run(root, 'uninstall', '--yes'));
   assert.equal(read(root, '.gitignore'), original);
 });
@@ -222,7 +224,7 @@ test('init upgrades an intact recorded managed block without changing surroundin
   const root = fixture(t);
   fs.writeFileSync(path.join(root, 'AGENTS.md'), 'Keep existing content.\n');
   ok(run(root, 'init', '--agent', 'codex', '--yes'));
-  const p = path.join(root, '.orbit-handoff/state.json');
+  const p = path.join(root, '.orbit-thread/state.json');
   const state = JSON.parse(fs.readFileSync(p, 'utf8'));
   const old = state.additions['AGENTS.md'].inserted.replace('Durable truth is', 'Legacy truth is');
   assert.notEqual(old, state.additions['AGENTS.md'].inserted);
