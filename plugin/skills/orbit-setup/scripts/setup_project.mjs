@@ -9,7 +9,7 @@ const end = '<!-- orbit-handoff:end -->';
 const ignoreBegin = '# orbit-handoff:start';
 const ignoreEnd = '# orbit-handoff:end';
 
-const agentsBlock = \`${begin}
+const agentsBlock = `${begin}
 ## Orbit Handoff workflow
 
 - Treat tracked source and relevant living docs as durable truth. \`HANDOFF-STATE.md\` is concise current execution state, never project history.
@@ -23,22 +23,22 @@ const agentsBlock = \`${begin}
 - Run the smallest relevant verification before claiming completion. Never claim tests, deployments or actions that did not run.
 - Never place secrets, credentials, environment values, personal data or sensitive production data in living docs or \`HANDOFF-STATE.md\`.
 ${end}
-\`;
+`;
 
-const claudeBlock = \`${begin}
+const claudeBlock = `${begin}
 ## Orbit Handoff
 
 Read and follow \`AGENTS.md\` for the project workflow, context-loading, checkpoint and subagent rules. On a fresh or recovered session, use \`HANDOFF-STATE.md\` plus current Git state and only the relevant living docs instead of reconstructing old conversation history.
 ${end}
-\`;
+`;
 
-const ignoreBlock = \`${ignoreBegin}
+const ignoreBlock = `${ignoreBegin}
 HANDOFF-STATE.md
 ${ignoreEnd}
-\`;
+`;
 
 const templates = {
-  'PRODUCT.md': \`# Product
+  'PRODUCT.md': `# Product
 
 > Living current-state document. Replace placeholders as product truth becomes known; do not append session history.
 
@@ -53,8 +53,8 @@ const templates = {
 
 ## Current constraints
 - TODO: material product limits that affect implementation.
-\`,
-  'ARCHITECTURE.md': \`# Architecture
+`,
+  'ARCHITECTURE.md': `# Architecture
 
 > Living current-state document. Update existing sections in place when the system changes.
 
@@ -69,8 +69,8 @@ const templates = {
 
 ## Operational constraints
 - TODO: deployment, runtime and reliability constraints.
-\`,
-  'SECURITY.md': \`# Security
+`,
+  'SECURITY.md': `# Security
 
 > Living current-state document. Record actual controls, invariants and known risks only.
 
@@ -85,8 +85,8 @@ const templates = {
 
 ## Known risks
 - TODO: unresolved security limitations or verification still required.
-\`,
-  'ROADMAP.md': \`# Roadmap
+`,
+  'ROADMAP.md': `# Roadmap
 
 > Forward-looking current plan only. Replace completed or superseded items instead of appending history.
 
@@ -101,8 +101,8 @@ const templates = {
 
 ## Explicitly deferred
 - TODO: work intentionally not being done now.
-\`,
-  'DESIGN.md': \`# Design
+`,
+  'DESIGN.md': `# Design
 
 > Living current-state design truth. Keep this concise and update it in place.
 
@@ -117,7 +117,7 @@ const templates = {
 
 ## Surface-specific decisions
 - TODO: only durable decisions that affect future UI work.
-\`,
+`,
 };
 
 const exists = p => {
@@ -129,7 +129,7 @@ const read = p => exists(p) ? fs.readFileSync(p, 'utf8') : '';
 function safePath(p) {
   let cursor = path.resolve(p);
   while (true) {
-    if (exists(cursor) && fs.lstatSync(cursor).isSymbolicLink()) throw new Error(\`Refusing symlink: ${cursor}\`);
+    if (exists(cursor) && fs.lstatSync(cursor).isSymbolicLink()) throw new Error(`Refusing symlink: ${cursor}`);
     const parent = path.dirname(cursor);
     if (parent === cursor) break;
     cursor = parent;
@@ -139,7 +139,7 @@ function safePath(p) {
 function atomicWrite(p, content) {
   safePath(p);
   fs.mkdirSync(path.dirname(p), { recursive: true });
-  const temporary = path.join(path.dirname(p), \`.orbit-handoff-${crypto.randomUUID()}.tmp\`);
+  const temporary = path.join(path.dirname(p), `.orbit-handoff-${crypto.randomUUID()}.tmp`);
   try {
     fs.writeFileSync(temporary, content, { flag: 'wx', mode: exists(p) ? fs.statSync(p).mode & 0o777 : 0o644 });
     fs.renameSync(temporary, p);
@@ -167,7 +167,7 @@ function loadState(root) {
   if (!exists(p)) return { product: 'orbit-handoff', schema: 2, configuredAgents: [], additions: {} };
   const parsed = JSON.parse(read(p));
   if (parsed.product !== 'orbit-handoff' || !parsed.additions || typeof parsed.additions !== 'object' || Array.isArray(parsed.additions)) {
-    throw new Error(\`Invalid Orbit Handoff state: ${p}\`);
+    throw new Error(`Invalid Orbit Handoff state: ${p}`);
   }
 
   if (parsed.schema === 1) {
@@ -179,13 +179,13 @@ function loadState(root) {
 
   if (parsed.schema !== 2 || !Array.isArray(parsed.configuredAgents) ||
       parsed.configuredAgents.some(agent => !['codex', 'claude'].includes(agent))) {
-    throw new Error(\`Unsupported Orbit Handoff state: ${p}\`);
+    throw new Error(`Unsupported Orbit Handoff state: ${p}`);
   }
 
   for (const [name, addition] of Object.entries(parsed.additions)) {
     if (!['AGENTS.md', 'CLAUDE.md', '.gitignore'].includes(name) ||
         typeof addition.inserted !== 'string' || typeof addition.created !== 'boolean') {
-      throw new Error(\`Invalid Orbit Handoff ownership entry: ${p}\`);
+      throw new Error(`Invalid Orbit Handoff ownership entry: ${p}`);
     }
   }
 
@@ -207,7 +207,7 @@ function desiredBlock(name) {
   if (name === 'AGENTS.md') return agentsBlock;
   if (name === 'CLAUDE.md') return claudeBlock;
   if (name === '.gitignore') return ignoreBlock;
-  throw new Error(\`Unknown managed file: ${name}\`);
+  throw new Error(`Unknown managed file: ${name}`);
 }
 
 function markers(name) {
@@ -222,11 +222,11 @@ function planManaged(root, state, name) {
 
   if (owned) {
     if (!before.includes(owned.inserted) || before.indexOf(owned.inserted) !== before.lastIndexOf(owned.inserted)) {
-      throw new Error(\`Managed Orbit Handoff block was edited or duplicated in ${name}; review it before running setup.\`);
+      throw new Error(`Managed Orbit Handoff block was edited or duplicated in ${name}; review it before running setup.`);
     }
     const [first, last] = markers(name);
     if (before.split(first).length !== 2 || before.split(last).length !== 2) {
-      throw new Error(\`Managed Orbit Handoff block was edited or duplicated in ${name}; review it before running setup.\`);
+      throw new Error(`Managed Orbit Handoff block was edited or duplicated in ${name}; review it before running setup.`);
     }
     const leading = owned.inserted.match(/^(?:\r?\n)*/)?.[0] ?? '';
     const inserted = leading + desiredBlock(name);
@@ -241,7 +241,7 @@ function planManaged(root, state, name) {
 
   const [first, last] = markers(name);
   if (before.includes(first) || before.includes(last)) {
-    throw new Error(\`Unowned or malformed Orbit Handoff block in ${name}; refusing to overwrite it.\`);
+    throw new Error(`Unowned or malformed Orbit Handoff block in ${name}; refusing to overwrite it.`);
   }
 
   const inserted = (before ? (before.endsWith('\n') ? '\n' : '\n\n') : '') + desiredBlock(name);
@@ -339,25 +339,25 @@ export function checkProject(root, selected = ['codex', 'claude']) {
 
   for (const agent of selected) {
     const configured = state.configuredAgents.includes(agent);
-    messages.push(\`${agent}: ${configured ? 'project workflow configured' : 'project workflow not configured'}\`);
+    messages.push(`${agent}: ${configured ? 'project workflow configured' : 'project workflow not configured'}`);
     if (!configured) ok = false;
   }
 
   for (const name of ['AGENTS.md', ...(selected.includes('claude') ? ['CLAUDE.md'] : [])]) {
     const addition = state.additions[name];
     const intact = addition && read(path.join(root, name)).includes(addition.inserted);
-    messages.push(\`${name}: ${intact ? 'managed block intact' : 'managed block missing or edited'}\`);
+    messages.push(`${name}: ${intact ? 'managed block intact' : 'managed block missing or edited'}`);
     if (!intact) ok = false;
   }
 
   const handoffIgnored = read(path.join(root, '.gitignore')).split(/\r?\n/)
     .some(line => line === 'HANDOFF-STATE.md' || line === '/HANDOFF-STATE.md');
-  messages.push(\`HANDOFF-STATE.md: ${handoffIgnored ? 'ignore rule present' : 'ignore rule missing'}\`);
+  messages.push(`HANDOFF-STATE.md: ${handoffIgnored ? 'ignore rule present' : 'ignore rule missing'}`);
   if (!handoffIgnored) ok = false;
 
   for (const name of Object.keys(templates)) {
     const present = exists(path.join(root, name)) || exists(path.join(root, 'docs', name));
-    messages.push(\`${name}: ${present ? 'present' : 'missing'}\`);
+    messages.push(`${name}: ${present ? 'present' : 'missing'}`);
     if (!present) ok = false;
   }
 
@@ -377,7 +377,7 @@ async function runCli(argv) {
   while (argv.length) {
     const flag = argv.shift();
     if (flag === '--agent') agent = argv.shift();
-    else throw new Error(\`Unknown option: ${flag}\`);
+    else throw new Error(`Unknown option: ${flag}`);
   }
 
   const root = resolveProjectRoot();
@@ -385,7 +385,7 @@ async function runCli(argv) {
 
   if (command === 'setup') {
     const result = setupProject(root, selected);
-    for (const item of [...result.managed, ...result.docs]) console.log(\`${item.action}: ${item.name}\`);
+    for (const item of [...result.managed, ...result.docs]) console.log(`${item.action}: ${item.name}`);
     console.log('Orbit Setup complete. HANDOFF-STATE.md will be created by the handoff skill at the first checkpoint.');
     return;
   }
@@ -396,10 +396,10 @@ async function runCli(argv) {
     return;
   }
   if (command === 'remove') {
-    removeProjectConfig(root, selected).forEach(item => console.log(\`${item.action}: ${item.name}\`));
+    removeProjectConfig(root, selected).forEach(item => console.log(`${item.action}: ${item.name}`));
     return;
   }
-  throw new Error(\`Unknown setup command: ${command}\`);
+  throw new Error(`Unknown setup command: ${command}`);
 }
 
 const direct = process.argv[1] && path.resolve(process.argv[1]) === path.resolve(fileURLToPath(import.meta.url));
