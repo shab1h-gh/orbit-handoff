@@ -319,7 +319,7 @@ export function setupProject(root, selected = ['codex', 'claude']) {
 
   const loaded = loadState(root);
   const state = loaded.state;
-  const config = ensureProjectConfig(root);
+  const config = readProjectConfig(root);
   state.configuredAgents = [...new Set([...state.configuredAgents, ...agents])].sort();
 
   const names = ['AGENTS.md', '.gitignore'];
@@ -328,6 +328,7 @@ export function setupProject(root, selected = ['codex', 'claude']) {
   const planned = names.map(name => planManaged(root, state, name, config)).filter(Boolean);
   const docs = ensureDocs(root);
 
+  ensureProjectConfig(root);
   for (const change of planned) atomicWrite(change.p, change.content);
   persistState(root, state, loaded.source);
 
