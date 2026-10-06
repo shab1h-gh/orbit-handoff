@@ -77,8 +77,8 @@ test('init never creates HANDOFF-STATE.md; selected uninstall preserves the othe
   fs.writeFileSync(path.join(root, 'HANDOFF-STATE.md'), 'keep local evidence');
   ok(run(root, 'uninstall', '--agent', 'codex', '--yes'));
   // AGENTS.md remains while Claude is still configured because it carries the shared Orbit workflow rules.
-  assert.equal(read(root, 'AGENTS.md').includes('Orbit Handoff workflow'), true);
-  assert.equal(read(root, 'CLAUDE.md').includes('Orbit Handoff'), true);
+  assert.equal(read(root, 'AGENTS.md').includes('Orbit Thread workflow'), true);
+  assert.equal(read(root, 'CLAUDE.md').includes('Orbit Thread'), true);
   assert.equal(read(root, '.gitignore').includes('HANDOFF-STATE.md'), true);
   ok(run(root, 'uninstall', '--agent', 'claude', '--yes'));
   assert.equal(fs.existsSync(path.join(root, 'CLAUDE.md')), false);
@@ -129,7 +129,7 @@ test('edited installed skill is preserved on update, reinstall and uninstall', t
 test('edited managed instructions survive uninstall; init refuses duplication', t => {
   const root = fixture(t);
   ok(run(root, 'init', '--yes'));
-  fs.writeFileSync(path.join(root, 'AGENTS.md'), read(root, 'AGENTS.md').replace('Inspect the current Git state', 'Inspect my preferred state'));
+  fs.writeFileSync(path.join(root, 'AGENTS.md'), read(root, 'AGENTS.md').replace('Durable truth is', 'My durable truth is'));
   const edited = read(root, 'AGENTS.md');
   assert.equal(run(root, 'init', '--yes').status, 1);
   assert.equal(read(root, 'AGENTS.md'), edited);
@@ -224,7 +224,7 @@ test('init upgrades an intact recorded managed block without changing surroundin
   ok(run(root, 'init', '--agent', 'codex', '--yes'));
   const p = path.join(root, '.orbit-handoff/state.json');
   const state = JSON.parse(fs.readFileSync(p, 'utf8'));
-  const old = state.additions['AGENTS.md'].inserted.replace('Inspect the current Git state', 'Inspect Git');
+  const old = state.additions['AGENTS.md'].inserted.replace('Durable truth is', 'Legacy truth is');
   assert.notEqual(old, state.additions['AGENTS.md'].inserted);
   fs.writeFileSync(path.join(root, 'AGENTS.md'), read(root, 'AGENTS.md').replace(state.additions['AGENTS.md'].inserted, old));
   state.additions['AGENTS.md'].inserted = old;
