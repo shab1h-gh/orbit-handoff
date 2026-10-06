@@ -1,32 +1,33 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
-  "name": "orbit-handoff",
+  "name": "orbit-thread",
   "version": "1.1.0",
-  "description": "Set up token-efficient coding continuity and carry verified state between sessions.",
+  "description": "Token-efficient project setup, checkpoints and coding-session continuity.",
   "author": { "name": "Shabih Anwar", "url": "https://github.com/shab1h-gh" },
-  "homepage": "https://github.com/shab1h-gh/orbit-handoff",
-  "repository": "https://github.com/shab1h-gh/orbit-handoff",
+  "homepage": "https://github.com/shab1h-gh/orbit-thread",
+  "repository": "https://github.com/shab1h-gh/orbit-thread",
   "license": "MIT",
   "keywords": ["handoff", "codex", "claude-code", "continuity", "project-setup", "developer-tools"],
   "extensions": {
     "com.openai": {
       "interface": {
-        "displayName": "Orbit Handoff",
-        "shortDescription": "Efficient coding continuity",
-        "longDescription": "Orbit Handoff adds two local coding skills. Orbit Setup prepares a project with lightweight living PRODUCT, DESIGN, ARCHITECTURE, SECURITY and ROADMAP documents plus token-efficient agent rules for selective context loading, bounded subagents and durable checkpoints. Orbit Handoff then overwrites a local HANDOFF-STATE.md with verified current state, decisions, risks and next steps at meaningful checkpoints and completed tasks. Handoffs are capped at 50 lines, validated before atomic replacement and kept separate from tracked project history. The handoff writer makes no network calls or Git mutations. Setup preserves existing docs and unrelated instructions.",
+        "displayName": "Orbit Thread",
+        "shortDescription": "Lean coding continuity",
+        "longDescription": "Orbit Thread gives coding agents a small, durable continuity layer. Orbit Setup creates only missing PRODUCT, DESIGN, ARCHITECTURE, SECURITY and ROADMAP living docs, adds selective context-loading and bounded-subagent rules, and keeps local execution state separate from tracked project truth. Handoff then overwrites a compact HANDOFF-STATE.md at meaningful verified checkpoints and completed coding tasks so a fresh session can resume from Git, current docs and the exact next action instead of carrying a large chat history. Handoffs are capped at 50 lines, validated before atomic replacement, and the writer makes no network calls or Git mutations. Existing project docs and unrelated instructions are preserved.",
         "developerName": "Shabih Anwar",
         "category": "Developer Tools",
         "capabilities": ["Prepare project continuity", "Save verified coding checkpoints"],
-        "websiteURL": "https://github.com/shab1h-gh/orbit-handoff",
-        "supportURL": "https://github.com/shab1h-gh/orbit-handoff/issues",
-        "privacyPolicyURL": "https://github.com/shab1h-gh/orbit-handoff/blob/main/PRIVACY.md",
-        "defaultPrompt": ["Set up this coding project for efficient continuity, or save the verified current state at a meaningful checkpoint."],
+        "websiteURL": "https://github.com/shab1h-gh/orbit-thread",
+        "supportURL": "https://github.com/shab1h-gh/orbit-thread/issues",
+        "privacyPolicyURL": "https://github.com/shab1h-gh/orbit-thread/blob/main/PRIVACY.md",
+        "defaultPrompt": ["Prepare this coding project for efficient continuity, or save verified current state at a meaningful checkpoint."],
         "brandColor": "#4338CA",
         "composerIcon": "./assets/icon.png",
         "logo": "./assets/icon.png"
       },
+      "onboardingSkill": "./skills/orbit-setup/SKILL.md",
       "publication": {
-        "release_notes": "Orbit Setup adds lightweight living project docs and token-efficient agent rules. Handoff can now be invoked automatically at configured meaningful checkpoints and completed tasks."
+        "release_notes": "Orbit Thread v1.1 adds project setup, living docs, configurable subagent preferences, automatic meaningful checkpoints, fresh-context recovery and Orbit Handoff migration support."
       }
     }
   }
