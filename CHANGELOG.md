@@ -1,20 +1,23 @@
 # Changelog
 
-## 1.1.0 — 6 October 2026
+## 1.1.0 — 7 October 2026
 
-- Add the new `orbit-setup` skill for Codex and Claude Code.
-- Add `npx orbit-handoff setup`; keep `init` as a backwards-compatible alias.
-- Create only missing lightweight living docs for product, design, architecture, security and roadmap truth while preserving existing equivalents.
-- Add token-efficient managed agent rules for selective context loading, in-place living-doc updates, bounded subagents and fresh-context recovery.
-- Allow the handoff skill to be invoked implicitly when Orbit project rules require a meaningful checkpoint or a completed coding task handoff.
+- Rename the product from **Orbit Handoff** to **Orbit Thread**.
+- Publish the feature release under the new npm package name `orbit-thread`; keep historical `orbit-handoff` releases immutable.
+- Add `orbit-setup` for Codex and Claude Code.
+- Add `npx orbit-thread setup`; keep `init` as an alias.
+- Create only missing lightweight PRODUCT, DESIGN, ARCHITECTURE, SECURITY and ROADMAP living docs while preserving existing equivalents.
+- Add selective context-loading, in-place living-doc updates, fresh-context recovery and bounded-subagent rules.
+- Add `configure` for project-specific subagent model/reasoning preferences stored in `.orbit-thread/config.json`.
+- Add `doctor` for continuity/config/document-health checks; keep `check` as an alias.
+- Allow Handoff to be invoked implicitly at meaningful verified checkpoints and completed coding tasks.
 - Keep `HANDOFF-STATE.md` overwrite-only, evidence-only and capped at 50 lines.
-- Upgrade existing managed standalone installs by adding the new setup skill without overwriting local edits.
-- Update portable/OpenAI and Claude plugin metadata for the dual-skill release.
+- Migrate compatible Orbit Handoff project state to Orbit Thread while preserving locally edited managed files.
+- Reduce CI noise by running feature work on pull requests, main on push, and package/release checks once after the cross-platform test matrix.
 
 ## 1.0.1 — 5 October 2026
 
-- Confirm successful public npm publication and make `npx orbit-handoff install`
-  the primary installation route.
+- Confirm successful public npm publication and make `npx orbit-handoff install` the primary installation route.
 - Remove stale pre-publication claims and record public package smoke testing.
 - Update release and submission artifact references; directory submissions remain pending.
 - Keep the installer, canonical skill and handoff writer unchanged.
