@@ -228,11 +228,12 @@ function planManaged(root, state, name) {
     if (before.split(first).length !== 2 || before.split(last).length !== 2) {
       throw new Error(`Managed Orbit Handoff block was edited or duplicated in ${name}; review it before running setup.`);
     }
-    const leading = owned.inserted.match(/^(?:\r?\n)*/)?.[0] ?? '';
+    const previousInserted = owned.inserted;
+    const leading = previousInserted.match(/^(?:\r?\n)*/)?.[0] ?? '';
     const inserted = leading + desiredBlock(name);
-    if (inserted === owned.inserted) return null;
+    if (inserted === previousInserted) return null;
     state.additions[name].inserted = inserted;
-    return { p, name, content: before.replace(owned.inserted, inserted), action: 'updated' };
+    return { p, name, content: before.replace(previousInserted, inserted), action: 'updated' };
   }
 
   if (name === '.gitignore' && before.split(/\r?\n/).some(line => line === 'HANDOFF-STATE.md' || line === '/HANDOFF-STATE.md')) {
