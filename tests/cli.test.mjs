@@ -76,7 +76,8 @@ test('init never creates HANDOFF-STATE.md; selected uninstall preserves the othe
   assert.equal(fs.existsSync(path.join(root, 'HANDOFF-STATE.md')), false);
   fs.writeFileSync(path.join(root, 'HANDOFF-STATE.md'), 'keep local evidence');
   ok(run(root, 'uninstall', '--agent', 'codex', '--yes'));
-  assert.equal(fs.existsSync(path.join(root, 'AGENTS.md')), false);
+  // AGENTS.md remains while Claude is still configured because it carries the shared Orbit workflow rules.
+  assert.equal(read(root, 'AGENTS.md').includes('Orbit Handoff workflow'), true);
   assert.equal(read(root, 'CLAUDE.md').includes('Orbit Handoff'), true);
   assert.equal(read(root, '.gitignore').includes('HANDOFF-STATE.md'), true);
   ok(run(root, 'uninstall', '--agent', 'claude', '--yes'));
@@ -229,7 +230,8 @@ test('init upgrades an intact recorded managed block without changing surroundin
   fs.writeFileSync(p, JSON.stringify(state));
   ok(run(root, 'init', '--agent', 'codex', '--yes'));
   assert.equal(read(root, 'AGENTS.md').startsWith('Keep existing content.\n'), true);
-  assert.equal(read(root, 'AGENTS.md').includes('Inspect the current Git state'), true);
+  assert.equal(read(root, 'AGENTS.md').includes('Load context selectively'), true);
+  assert.equal(read(root, 'AGENTS.md').includes('Inspect Git'), false);
   assert.equal(read(root, 'AGENTS.md').split('orbit-handoff:start').length, 2);
   ok(run(root, 'uninstall', '--agent', 'codex', '--yes'));
   assert.equal(read(root, 'AGENTS.md'), 'Keep existing content.\n');
