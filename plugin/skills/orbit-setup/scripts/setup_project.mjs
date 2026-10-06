@@ -17,29 +17,29 @@ const legacyIgnoreEnd = '# orbit-handoff:end';
 const agentsBlock = config => `${begin}
 ## Orbit Thread workflow
 
-- Durable truth is the tracked source plus current living docs. `HANDOFF-STATE.md` is concise execution state only, never project history.
+- Durable truth is the tracked source plus current living docs. \`HANDOFF-STATE.md\` is concise execution state only, never project history.
 - Before substantial work, inspect current Git state and load context selectively:
-  - product behaviour, scope or copy → `PRODUCT.md`;
-  - UI/UX → `DESIGN.md`;
-  - runtime, data flow, infrastructure or integrations → `ARCHITECTURE.md`;
-  - auth, tenancy, secrets, public entry points or other security-sensitive work → `SECURITY.md`;
-  - future planning only → `ROADMAP.md`.
-  Use the matching file in `docs/` or the project root. For cross-cutting work, read only the additional docs it actually touches.
+  - product behaviour, scope or copy → \`PRODUCT.md\`;
+  - UI/UX → \`DESIGN.md\`;
+  - runtime, data flow, infrastructure or integrations → \`ARCHITECTURE.md\`;
+  - auth, tenancy, secrets, public entry points or other security-sensitive work → \`SECURITY.md\`;
+  - future planning only → \`ROADMAP.md\`.
+  Use the matching file in \`docs/\` or the project root. For cross-cutting work, read only the additional docs it actually touches.
 - Inspect only source files needed for the task. Do not broadly scan generated, vendor, dependency, build, coverage or cache directories, and do not reread unchanged context without a reason.
 - Living docs describe CURRENT truth. After verified work changes that truth, update affected existing sections in place during the same milestone. Never append session diaries or duplicate superseded sections; Git is history. Never rewrite an applied migration.
 - Run the smallest relevant verification before claiming a milestone or task complete. Never claim a test, deployment, commit, push or external action that did not run.
-- Run the installed `handoff` skill after a meaningful verified milestone that changed repository state or durable project truth, and after each completed coding task with such changes before the final reply. Also checkpoint before `/clear`, session end, or a usage/context stop when warning is available. Skip read-only questions and trivial edits. Intermediate checkpoints must not stop unfinished work.
-- Each checkpoint overwrites `HANDOFF-STATE.md`. After a fresh/cleared/recovered session: read the handoff once if present, inspect branch/status/diff/recent log, read only relevant living docs, then inspect only source needed for the exact next action. Do not reconstruct old conversation history or repeat completed work.
+- Run the installed \`handoff\` skill after a meaningful verified milestone that changed repository state or durable project truth, and after each completed coding task with such changes before the final reply. Also checkpoint before \`/clear\`, session end, or a usage/context stop when warning is available. Skip read-only questions and trivial edits. Intermediate checkpoints must not stop unfinished work.
+- Each checkpoint overwrites \`HANDOFF-STATE.md\`. After a fresh/cleared/recovered session: read the handoff once if present, inspect branch/status/diff/recent log, read only relevant living docs, then inspect only source needed for the exact next action. Do not reconstruct old conversation history or repeat completed work.
 ${renderSubagentBlock(config)}
 - Read-only Git inspection is allowed. Commit, push, merge, rebase, reset, branch deletion or other Git writes require explicit authority in the current request. Never force-push or destructively clean without explicit authority.
-- Never place secrets, credentials, environment values, private keys, recovery codes, personal data or sensitive production data in living docs or `HANDOFF-STATE.md`.
+- Never place secrets, credentials, environment values, private keys, recovery codes, personal data or sensitive production data in living docs or \`HANDOFF-STATE.md\`.
 ${end}
 `;
 
 const claudeBlock = `${begin}
 ## Orbit Thread
 
-Read and follow `AGENTS.md` for project workflow, selective context loading, subagents and checkpoints. On a fresh or recovered session, resume from `HANDOFF-STATE.md` + current Git state + only the relevant living docs instead of reconstructing old conversation history.
+Read and follow \`AGENTS.md\` for project workflow, selective context loading, subagents and checkpoints. On a fresh or recovered session, resume from \`HANDOFF-STATE.md\` + current Git state + only the relevant living docs instead of reconstructing old conversation history.
 ${end}
 `;
 const templates = {
