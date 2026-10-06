@@ -1,69 +1,129 @@
 # Directory submission
 
-Prepared on 5 October 2026. No public directory submission has been made, and no
-approval or listing is implied by local validation.
+Updated 6 October 2026.
 
-## OpenAI public Plugins Directory
+Public directory review is separate from npm, GitHub and standalone skill
+installation. This repository cannot see an account-side review decision unless
+the provider exposes it publicly, so the publisher dashboard remains authoritative.
 
-Release artifact: `orbit-handoff-plugin-1.0.1.zip`. Build it with
-`npm run build:plugin`; the output is `dist/orbit-handoff-plugin-1.0.1.zip`.
-The ZIP has portable `plugin.json` at its root, `skills/handoff`, OpenAI interface
-metadata, a real PNG icon and the Claude compatibility manifest. It contains no
-MCP server, hooks or account configuration. The category is Developer Tools.
+## OpenAI / ChatGPT Plugins Directory
 
-Publisher steps, following the current [OpenAI submission guide](https://developers.openai.com/plugins/deploy/submission):
+The v1.1.0 submission artifact is:
 
-1. Open [OpenAI Plugins](https://platform.openai.com/plugins) under the intended
-   organisation/project. Confirm publishing permission and complete developer
-   identity verification as Shabih Anwar.
-2. Choose **Upload new or existing plugin**, select the verified identity and
-   upload the release ZIP.
-3. Review automated metadata/skill findings, fix blocking errors, and check the
-   imported listing. This is skills-only; there is no MCP connection to configure.
-4. Complete any review fields and policy attestations requested in the dashboard,
-   then submit the draft for review.
-5. After approval, select **Publish plugin**. Only then advertise a directory
-   listing. Local schema checks cannot replace dashboard validation or review.
+```text
+dist/orbit-handoff-plugin-1.1.0.zip
+```
 
-Suggested review exercise: work in a disposable Git repository with a POSIX shell;
-explicitly invoke `handoff` after a session with known changes and tests. Confirm
-that the resulting file reflects only that evidence, is at most 50 lines and
-overwrites prior state. Check that 51 lines and synthetic secret-bearing input
-are rejected without losing the old file. No reviewer account is needed for the
-plugin itself. The host agent still needs its normal authentication.
+Build it with:
 
-## Anthropic directory / community distribution
+```sh
+npm run build:plugin
+```
 
-The public GitHub marketplace is separate from Anthropic directory approval.
-Repository: `shab1h-gh/orbit-handoff`. Plugin folder: `plugin`. Release tag:
-`v1.0.1`. Validate with:
+The ZIP contains portable `plugin.json`, both canonical skills:
+
+```text
+skills/handoff/
+skills/orbit-setup/
+```
+
+plus OpenAI interface metadata, the listing icon and Claude compatibility
+manifest. Orbit Handoff needs no MCP server or external account.
+
+### Check an existing submission
+
+Open the OpenAI Plugins publisher dashboard:
+
+```text
+https://platform.openai.com/plugins
+```
+
+Use the same organisation/project and verified publisher identity used for the
+submission. The dashboard status is authoritative for whether the draft is
+pending review, requires changes, has been approved, or is published.
+
+Do not infer approval from:
+
+- npm publication;
+- Codex standalone installation;
+- GitHub release artefacts;
+- the repository being public;
+- the plugin ZIP passing local validation.
+
+If an older v1.0.x package is already under review or approved, do not assume
+changing `main` updates that submission. Use the publisher dashboard's current
+update/version workflow for the new v1.1.0 ZIP after this release is verified.
+
+### Submission/update flow
+
+1. Complete local release validation and build the v1.1.0 ZIP.
+2. Open the Plugins publisher dashboard with the verified publisher identity.
+3. Open the existing Orbit Handoff listing if one exists; otherwise create a new
+   plugin submission.
+4. Upload the validated v1.1.0 ZIP through the dashboard's current version/update
+   flow.
+5. Review automated findings and listing metadata.
+6. Complete any required policy/data-handling attestations.
+7. Submit the new version for review.
+8. Only advertise public availability after the dashboard says the listing is
+   approved/published.
+
+Suggested reviewer exercise: run Orbit Setup in a disposable project, confirm
+that it preserves existing docs while creating missing living-doc templates,
+then run Handoff after known changes/tests and verify that the resulting
+`HANDOFF-STATE.md` reflects only current evidence, is at most 50 lines and
+overwrites prior state.
+
+## Anthropic / Claude public marketplace
+
+The GitHub marketplace route is independent of Anthropic's public directory.
+
+This works without public-directory approval:
+
+```text
+/plugin marketplace add shab1h-gh/orbit-handoff
+/plugin install orbit-handoff@orbit-handoff
+```
+
+or:
+
+```sh
+claude plugin marketplace add shab1h-gh/orbit-handoff
+claude plugin install orbit-handoff@orbit-handoff
+```
+
+A successful GitHub marketplace installation therefore does **not** mean Orbit
+Handoff should appear in Claude's public Skills/Plugins marketplace.
+
+For public-directory submission/status, use Anthropic's current developer
+management surface:
+
+```text
+https://claude.ai/directory/manage
+```
+
+Connect the GitHub account that owns/pushes to `shab1h-gh/orbit-handoff`, open
+the existing submission if one exists, and check its current review/publishing
+state there.
+
+For v1.1.0, validate the plugin before submitting/updating:
 
 ```sh
 claude plugin validate ./plugin --strict
 claude plugin validate . --strict
 ```
 
-The current [Anthropic submission route](https://claude.com/docs/plugins/submit)
-is the developer portal, replacing earlier submission forms:
+Then submit the repository/plugin path and the immutable release tag once v1.1.0
+has been tagged. Until that release exists, do not claim the v1.1.0 public
+listing is available.
 
-1. Open [the developer portal](https://claude.ai/directory/manage) with an eligible
-   paid plan/role and connect the GitHub account that can push to this repository.
-2. Select **Submit new → Plugin bundle**. Enter `shab1h-gh/orbit-handoff`, plugin
-   path `plugin`, and tag `v1.0.1` for this immutable release (or `main` if you want
-   future branch updates reviewed).
-3. Run **Validate**, resolve blocking findings and check the listing details.
-4. Complete data-handling questions, the publisher contact email and compliance
-   acknowledgements. Orbit Handoff has no remote service or telemetry; its state
-   is local and remains until the user removes it.
-5. Review and submit. Wait for the provider's checks/review, then follow the
-   portal's publishing step. Do not claim approval before it is granted.
+The official/public marketplace may have additional eligibility, review and
+publisher requirements that the GitHub marketplace route does not.
 
-The official `claude-plugins-official` marketplace has a separate partner route;
-the current documentation directs publishers to their Anthropic partner contact.
-No email, form or third-party submission has been sent automatically.
+## General rule
 
-The [pre-submission checklist](https://claude.com/docs/plugins/pre-submission-checklist)
-also checks README and licence presence, file sizes and names, and credentials.
-The plugin README and licence are included, with no dependencies or executable
-downloads inside the plugin. The provider portal applies further checks and
-name-availability rules that the CLI cannot confirm locally.
+Provider dashboard state wins over repository documentation.
+
+If a provider changes its submission workflow, update this file to current truth
+rather than appending historical instructions. Git history already records the
+old process.
