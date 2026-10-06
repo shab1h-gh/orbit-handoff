@@ -1,6 +1,6 @@
 # Contributing
 
-Thanks for helping improve Orbit Handoff. Open an issue for a bug or a focused
+Thanks for helping improve Orbit Handoff. Open an issue for a bug or focused
 proposal, or send a pull request with a clear explanation and relevant tests.
 Use synthetic repositories and credentials in reproductions.
 
@@ -15,13 +15,34 @@ npm run build:plugin
 npm pack --dry-run
 ```
 
-Keep the canonical skill in `plugin/skills/handoff`. Do not create agent-specific
-copies of the workflow. The two plugin manifests describe the same skill tree.
-Installer tests use disposable projects and must preserve user content. Runtime
-changes must keep the 50-line cap, validation before atomic replacement, secret
-backstop, no temporary residue, no network and no Git mutation.
+Keep the canonical skills in:
 
-If you change packaging, also run `claude plugin validate ./plugin --strict` and
-`claude plugin validate . --strict` with the current Claude Code CLI. Public
-directory validation is a separate publisher step; local tests do not imply
-approval. Use British English in documentation.
+```text
+plugin/skills/handoff/
+plugin/skills/orbit-setup/
+```
+
+Do not create divergent Codex and Claude implementations.
+
+Changes to Handoff must preserve the 50-line cap, overwrite-only current state,
+validation before atomic replacement, secret backstop, failed-write preservation,
+no temporary residue, no network calls and no Git mutation.
+
+Changes to Orbit Setup must preserve existing project documentation and unrelated
+instructions, avoid duplicate root/docs files, remain idempotent, and keep living
+docs as current-state documents rather than changelogs.
+
+Installer/update tests should use disposable projects and verify migration from
+older managed installs, edited-file preservation and user-owned content.
+
+If you change packaging, also run:
+
+```sh
+claude plugin validate ./plugin --strict
+claude plugin validate . --strict
+```
+
+Public-directory validation is a separate publisher step; local checks do not
+imply OpenAI or Anthropic approval.
+
+Use British English in documentation.
