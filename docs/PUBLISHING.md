@@ -1,117 +1,113 @@
 # npm publication and releases
 
-Orbit Handoff is published as the public npm package `orbit-handoff`.
+Orbit Thread v1.1.0 is the successor to Orbit Handoff v1.0.x.
 
-Versions `1.0.0` and `1.0.1` are immutable historical releases. Do not republish,
-unpublish or move their tags.
+Historical `orbit-handoff@1.0.0` and `orbit-handoff@1.0.1` releases are immutable. Do not republish, unpublish or move their release tags.
 
-Version `1.1.0` adds Orbit Setup and automatic checkpoint support, so it is a
-feature release rather than a documentation-only patch.
+The new primary package is:
 
-The primary installation route remains:
-
-```sh
-npx orbit-handoff install
+```text
+orbit-thread
 ```
 
-## Prepare v1.1.0
+## Release checks
 
-Before publication, run:
+Before publication:
 
 ```sh
 npm test
 npm run validate
 npm run scan:public
 npm run build:plugin
-npm pack --dry-run
 npm pack
+npm run smoke:pack
 ```
 
-Inspect the npm tarball and portable plugin ZIP before publishing. Verify that
-both canonical skills are present:
+Also validate the Claude plugin with the currently installed Claude Code release:
+
+```sh
+claude plugin validate ./plugin --strict
+claude plugin validate . --strict
+```
+
+Inspect:
+
+```text
+orbit-thread-1.1.0.tgz
+dist/orbit-thread-plugin-1.1.0.zip
+```
+
+Confirm both canonical skills are present:
 
 ```text
 plugin/skills/handoff/
 plugin/skills/orbit-setup/
 ```
 
-Smoke-test the packed package in a disposable project:
-
-```sh
-git init
-npx --yes --package ./orbit-handoff-1.1.0.tgz orbit-handoff install --agent both --scope project --yes
-npx --yes --package ./orbit-handoff-1.1.0.tgz orbit-handoff setup --agent both --yes
-npx --yes --package ./orbit-handoff-1.1.0.tgz orbit-handoff check --agent both --scope project
-```
-
-Confirm:
-
-- Codex and Claude receive both managed skills.
-- `$orbit-setup` / `/orbit-setup` are discoverable through their native skill loaders.
-- setup creates only missing living-doc templates and preserves existing equivalents.
-- setup is idempotent.
-- existing v1.0.x managed continuity blocks upgrade safely.
-- `HANDOFF-STATE.md` stays local/Git-ignored and is not created by setup.
-- handoff still enforces the 50-line cap, secret rejection and atomic overwrite.
-- uninstall preserves setup-created living project docs and user-owned content.
+and that the packed CLI can install, setup, configure, doctor, update and uninstall in a disposable repository.
 
 ## Publish
 
-After all release checks pass:
+After release checks pass:
 
 ```sh
-npm publish ./orbit-handoff-1.1.0.tgz --access public --registry https://registry.npmjs.org/
+npm publish ./orbit-thread-1.1.0.tgz --access public --registry https://registry.npmjs.org/
 ```
 
-Complete npm's normal browser/2FA challenge if prompted. Never weaken npm account
-security to automate publication.
+Complete npm's normal browser/2FA challenge if prompted. Never weaken npm account security to automate publication.
 
-If the current agent cannot complete interactive authentication, stop with the
-verified tarball and give the publisher the exact command above.
+If interactive authentication is unavailable to the release agent, stop with the verified tarball and give the publisher the exact command above.
 
 ## Verify public distribution
 
 After publication:
 
 ```sh
-npm view orbit-handoff@latest version repository --registry https://registry.npmjs.org/
-mkdir /tmp/orbit-handoff-public-smoke
-cd /tmp/orbit-handoff-public-smoke
+npm view orbit-thread@latest version repository --registry https://registry.npmjs.org/
+mkdir /tmp/orbit-thread-public-smoke
+cd /tmp/orbit-thread-public-smoke
 git init
-npx orbit-handoff@latest install --agent both --scope project --yes
-npx orbit-handoff@latest setup --agent both --yes
-npx orbit-handoff@latest check --agent both --scope project
-npx orbit-handoff@latest uninstall --agent both --scope project --yes
+npx orbit-thread@latest install --agent both --scope project --yes
+npx orbit-thread@latest setup --agent both --yes
+npx orbit-thread@latest doctor --agent both --scope project
+npx orbit-thread@latest uninstall --agent both --scope project --yes
 ```
 
-Verify `latest` resolves to `1.1.0` and repeat the setup/handoff smoke tests
-against the actual registry package.
+Verify `latest` resolves to `1.1.0` and package metadata points to `shab1h-gh/orbit-thread`.
 
-## Existing users
+## Existing Orbit Handoff users
 
-Standalone npm-managed installations update with:
+Because the npm package name changes, users should migrate through the new package explicitly:
 
 ```sh
-npx orbit-handoff@latest update --agent both --scope project --yes
-npx orbit-handoff@latest setup --agent both --yes
+npx orbit-thread@latest update --agent both --scope project --yes
+npx orbit-thread@latest setup --agent both --yes
+npx orbit-thread doctor --agent both --scope project
 ```
 
-`update` installs the new `orbit-setup` skill and upgrades unchanged managed
-skill files. `setup` upgrades the project's managed rules and creates only
-missing living-doc templates.
+The v1.1 CLI accepts compatible Orbit Handoff ownership/project state and migrates it while refusing locally edited managed files.
 
-Claude GitHub-marketplace users update through Claude:
+After Orbit Thread is publicly verified, the old package may be deprecated with a migration message, but must not be unpublished:
 
 ```sh
-claude plugin update orbit-handoff@orbit-handoff
+npm deprecate 'orbit-handoff@<=1.0.1' 'Renamed to orbit-thread. Install orbit-thread@latest.'
+```
+
+That command also requires publisher authentication and is optional.
+
+## Claude GitHub-marketplace users
+
+After the repository is renamed:
+
+```sh
+claude plugin marketplace add shab1h-gh/orbit-thread
+claude plugin install orbit-thread@orbit-thread
 ```
 
 Then run:
 
 ```text
-/orbit-handoff:orbit-setup
+/orbit-thread:orbit-setup
 ```
 
-Public provider-directory submissions are separate from npm/GitHub distribution.
-See [SUBMISSION.md](SUBMISSION.md). A successful npm or GitHub marketplace install
-does not prove public directory approval.
+Public OpenAI and Anthropic directory publication is separate from npm/GitHub distribution. See [SUBMISSION.md](SUBMISSION.md).
