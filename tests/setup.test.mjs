@@ -20,7 +20,7 @@ test('setup creates living docs and managed project rules idempotently', t => {
   for (const name of ['PRODUCT.md','ARCHITECTURE.md','SECURITY.md','ROADMAP.md','DESIGN.md']) assert.equal(fs.existsSync(path.join(root,'docs',name)), true);
   assert.match(fs.readFileSync(path.join(root,'AGENTS.md'),'utf8'), /Orbit Thread workflow/);
   assert.match(fs.readFileSync(path.join(root,'CLAUDE.md'),'utf8'), /Read and follow `AGENTS.md`/);
-  assert.match(fs.readFileSync(path.join(root,'.gitignore'),'utf8'), /^# orbit-handoff:start/m);
+  assert.match(fs.readFileSync(path.join(root,'.gitignore'),'utf8'), /^# orbit-thread:start/m);
   assert.equal(fs.existsSync(path.join(root,'HANDOFF-STATE.md')), false);
   assert.equal(fs.existsSync(path.join(root,'.orbit-thread','config.json')), true);
   const before = fs.readFileSync(path.join(root,'AGENTS.md'),'utf8');
