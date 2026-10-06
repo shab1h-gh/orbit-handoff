@@ -5,10 +5,14 @@ import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { ensureProjectConfig, readProjectConfig, renderSubagentBlock } from './project_config.mjs';
 
-const begin = '<!-- orbit-handoff:start -->';
-const end = '<!-- orbit-handoff:end -->';
-const ignoreBegin = '# orbit-handoff:start';
-const ignoreEnd = '# orbit-handoff:end';
+const begin = '<!-- orbit-thread:start -->';
+const end = '<!-- orbit-thread:end -->';
+const legacyBegin = '<!-- orbit-handoff:start -->';
+const legacyEnd = '<!-- orbit-handoff:end -->';
+const ignoreBegin = '# orbit-thread:start';
+const ignoreEnd = '# orbit-thread:end';
+const legacyIgnoreBegin = '# orbit-handoff:start';
+const legacyIgnoreEnd = '# orbit-handoff:end';
 
 const agentsBlock = config => `${begin}
 ## Orbit Thread workflow
@@ -232,8 +236,18 @@ function desiredBlock(name, config, before = '') {
   throw new Error(`Unknown managed file: ${name}`);
 }
 
-function markers(name) {
-  return name === '.gitignore' ? [ignoreBegin, ignoreEnd] : [begin, end];
+function markersForInserted(name, inserted) {
+  if (name === '.gitignore') {
+    return inserted.includes(legacyIgnoreBegin) ? [legacyIgnoreBegin, legacyIgnoreEnd] : [ignoreBegin, ignoreEnd];
+  }
+  return inserted.includes(legacyBegin) ? [legacyBegin, legacyEnd] : [begin, end];
+}
+
+function hasAnyManagedMarker(name, text) {
+  const values = name === '.gitignore'
+    ? [ignoreBegin, ignoreEnd, legacyIgnoreBegin, legacyIgnoreEnd]
+    : [begin, end, legacyBegin, legacyEnd];
+  return values.some(value => text.includes(value));
 }
 
 function planManaged(root, state, name, config) {
@@ -246,7 +260,7 @@ function planManaged(root, state, name, config) {
     if (!before.includes(owned.inserted) || before.indexOf(owned.inserted) !== before.lastIndexOf(owned.inserted)) {
       throw new Error(`Managed Orbit Thread block was edited or duplicated in ${name}; review it before running setup.`);
     }
-    const [first, last] = markers(name);
+    const [first, last] = markersForInserted(name, owned.inserted);
     if (before.split(first).length !== 2 || before.split(last).length !== 2) {
       throw new Error(`Managed Orbit Thread block was edited or duplicated in ${name}; review it before running setup.`);
     }
@@ -265,9 +279,8 @@ function planManaged(root, state, name, config) {
   }
 
 
-  const [first, last] = markers(name);
-  if (before.includes(first) || before.includes(last)) {
-    throw new Error(`Unowned or malformed Orbit Thread block in ${name}; refusing to overwrite it.`);
+  if (hasAnyManagedMarker(name, before)) {
+    throw new Error(`Unowned or malformed Orbit Thread/legacy block in ${name}; refusing to overwrite it.`);
   }
 
   const rawDesired = desiredBlock(name, config, before);
