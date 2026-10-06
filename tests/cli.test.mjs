@@ -61,7 +61,7 @@ test('init preserves existing content, adds a single block, ignores only intende
   for (const [name, content] of Object.entries(originals)) {
     assert.equal(read(root, name), first[name]);
     assert.equal(read(root, name).startsWith(content), true);
-    assert.equal((read(root, name).match(/orbit-handoff:start/g) ?? []).length, 1);
+    assert.equal((read(root, name).match(/orbit-thread:start/g) ?? []).length, 1);
   }
   assert.equal(spawnSync('git', ['check-ignore', 'HANDOFF-STATE.md'], { cwd: root }).status, 0);
   assert.equal(spawnSync('git', ['check-ignore', 'HANDOFF-STATE-other.md'], { cwd: root }).status, 1);
@@ -234,7 +234,7 @@ test('init upgrades an intact recorded managed block without changing surroundin
   const upgradedState = JSON.parse(fs.readFileSync(p, 'utf8'));
   assert.notEqual(upgradedState.additions['AGENTS.md'].inserted, old);
   assert.equal(read(root, 'AGENTS.md').includes(upgradedState.additions['AGENTS.md'].inserted), true);
-  assert.equal(read(root, 'AGENTS.md').split('orbit-handoff:start').length, 2);
+  assert.equal(read(root, 'AGENTS.md').split('orbit-thread:start').length, 2);
   ok(run(root, 'uninstall', '--agent', 'codex', '--yes'));
   assert.equal(read(root, 'AGENTS.md'), 'Keep existing content.\n');
 });
