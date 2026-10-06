@@ -1,30 +1,26 @@
-# Orbit Handoff
+# Orbit Thread
 
-Orbit Handoff provides two local coding skills:
+Orbit Thread provides two local coding skills:
 
-- **Orbit Setup** prepares a project with lightweight living documentation and token-efficient agent rules.
-- **Orbit Handoff** saves concise verified current state to `HANDOFF-STATE.md` so a fresh coding session can resume without carrying a large conversation.
+- **Orbit Setup** prepares a project with lightweight living docs, selective context rules and configurable subagent preferences.
+- **Handoff** overwrites a compact, evidence-only `HANDOFF-STATE.md` so a fresh coding session can resume from Git + current project truth rather than a large old conversation.
 
-## Commands
-
-Standalone installations expose:
+Standalone commands:
 
 - Codex: `$orbit-setup` and `$handoff`
 - Claude Code: `/orbit-setup` and `/handoff`
 
-When installed as this Claude plugin, the namespaced commands are:
+Claude plugin commands:
 
-- `/orbit-handoff:orbit-setup`
-- `/orbit-handoff:handoff`
+- `/orbit-thread:orbit-setup`
+- `/orbit-thread:handoff`
 
-Orbit Setup creates only missing `PRODUCT.md`, `DESIGN.md`, `ARCHITECTURE.md`, `SECURITY.md` and `ROADMAP.md` templates, preserves existing equivalents, manages concise Orbit rules in `AGENTS.md`/ `CLAUDE.md`, and keeps `HANDOFF-STATE.md` Git-ignored.
+Setup creates only missing PRODUCT, DESIGN, ARCHITECTURE, SECURITY and ROADMAP templates, preserves existing equivalents, manages a concise Orbit Thread section in AGENTS.md/CLAUDE.md, and keeps local handoff/tool state Git-ignored.
 
-The project rules keep those tracked documents as current truth, update them in place rather than appending session history, default to no subagents with a maximum of two when genuinely useful, and ask the agent to run Handoff after meaningful verified milestones and completed coding tasks that changed repository state or durable project truth.
+The project rules update living docs in place, load only relevant context, default to no subagents with a maximum of two, and request Handoff after meaningful verified milestones/completed coding tasks.
 
-Orbit Handoff overwrites rather than appends. The handoff is capped at 50 lines, rejects empty and obvious secret-bearing input, writes atomically, preserves the previous valid state after rejected content, makes no network calls and does not mutate Git.
+Handoff is overwrite-only, capped at 50 lines, secret-checked before atomic replacement and makes no network calls or Git mutations.
 
-There is no MCP server, telemetry or external account. The host coding agent still needs repository/shell access to run the local workflow.
+There is no MCP server, telemetry or external account.
 
-Standalone installation, updating and distribution details are in the [project README](https://github.com/shab1h-gh/orbit-handoff#readme).
-
-Licensed under MIT by Shabih Anwar.
+See the project README for installation, migration and update instructions.
