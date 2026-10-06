@@ -10,14 +10,18 @@ const portable = readJson('plugin/plugin.json');
 const claude = readJson('plugin/.claude-plugin/plugin.json');
 const marketplace = readJson('.claude-plugin/marketplace.json');
 
+assert.equal(pkg.name, 'orbit-thread');
 assert.equal(portable.name, pkg.name);
 assert.equal(portable.version, pkg.version);
 assert.equal(claude.name, pkg.name);
 assert.equal(claude.version, pkg.version);
+assert.equal(marketplace.name, pkg.name);
+assert.equal(marketplace.plugins[0].name, pkg.name);
 assert.equal(marketplace.plugins[0].version, pkg.version);
 assert.equal(claude.skills, './skills/');
 assert.equal(pkg.scripts?.postinstall, undefined);
 assert.equal(pkg.dependencies, undefined);
+assert.equal(portable.extensions['com.openai'].onboardingSkill, './skills/orbit-setup/SKILL.md');
 
 for (const skill of ['handoff', 'orbit-setup']) {
   const dir = path.join(root, 'plugin/skills', skill);
@@ -30,8 +34,12 @@ for (const skill of ['handoff', 'orbit-setup']) {
 
 assert.equal(fs.existsSync(path.join(root, 'plugin/skills/handoff/scripts/write_handoff.sh')), true);
 assert.equal(fs.existsSync(path.join(root, 'plugin/skills/orbit-setup/scripts/setup_project.mjs')), true);
+assert.equal(fs.existsSync(path.join(root, 'plugin/skills/orbit-setup/scripts/project_config.mjs')), true);
+assert.equal(fs.existsSync(path.join(root, 'bin/orbit-thread.mjs')), true);
+
 const listing = portable.extensions['com.openai'].interface;
 for (const [key, limit] of Object.entries({ displayName: 30, shortDescription: 30, longDescription: 4000, developerName: 80 })) {
   assert.ok(typeof listing[key] === 'string' && listing[key].length > 0 && listing[key].length <= limit, key);
 }
-console.log('Orbit Handoff dual-skill package, manifests and implicit invocation validated.');
+
+console.log('Orbit Thread dual-skill package, onboarding metadata, config and implicit invocation validated.');
