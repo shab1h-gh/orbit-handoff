@@ -133,10 +133,14 @@ A disposable local fixture exercised the new dual-skill/setup implementation:
 - Eight focused local setup/runtime checks passed in the isolated validation
   fixture used while preparing the feature branch.
 
-These focused checks are not a substitute for the repository's full CI matrix.
-The full existing test suite, macOS/Linux CI, npm tarball smoke test, current
-Claude native plugin validation, Codex native skill discovery and public-registry
-smoke test must pass before v1.1.0 is published/tagged.
+The feature branch's full GitHub CI matrix passed on macOS and Linux with Node.js
+20 and 24 after the setup migration fix. Each job ran the repository test suite,
+package validation, public-source scan, plugin ZIP build and npm pack dry run.
+The suite now contains 29 tests, including the new setup/idempotency cases.
+
+A packed npm-tarball smoke test, current Claude native plugin validation, Codex
+native skill discovery and public-registry smoke test are still required before
+v1.1.0 is published/tagged.
 
 ### Invocation-policy change
 
