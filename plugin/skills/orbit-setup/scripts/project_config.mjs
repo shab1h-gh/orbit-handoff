@@ -36,7 +36,7 @@ function atomicWrite(p, content) {
 }
 
 const configPath = root => path.join(root, '.orbit-thread/config.json');
-const statePath = root => path.join(root, '.orbit-handoff/state.json');
+const statePath = root => path.join(root, '.orbit-thread/state.json');
 const defaultConfig = () => ({
   product: PRODUCT,
   schema: SCHEMA,
