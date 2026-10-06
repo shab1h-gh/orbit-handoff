@@ -160,40 +160,48 @@ export function resolveProjectRoot(cwd = process.cwd()) {
 }
 
 function statePath(root) {
-  return path.join(root, '.orbit-handoff/state.json');
+  return path.join(root, '.orbit-thread/state.json');
+}
+
+function legacyStatePath(root) {
+  return path.join(root, '.orbit-thread/state.json');
 }
 
 function loadState(root) {
-  const p = statePath(root);
-  if (!exists(p)) return { product: 'orbit-handoff', schema: 2, configuredAgents: [], additions: {} };
-  const parsed = JSON.parse(read(p));
-  if (parsed.product !== 'orbit-handoff' || !parsed.additions || typeof parsed.additions !== 'object' || Array.isArray(parsed.additions)) {
-    throw new Error(`Invalid Orbit Thread state: ${p}`);
-  }
+  const current = statePath(root);
+  const legacy = legacyStatePath(root);
+  if (exists(current) && exists(legacy)) throw new Error('Both Orbit Thread and legacy Orbit Handoff state files exist; reconcile them before setup.');
+  const source = exists(current) ? current : exists(legacy) ? legacy : null;
+  if (!source) return { state: { product: 'orbit-thread', schema: 3, configuredAgents: [], additions: {} }, source: null };
 
-  if (parsed.schema === 1) {
-    const configured = [];
-    if (parsed.additions['AGENTS.md']) configured.push('codex');
-    if (parsed.additions['CLAUDE.md']) configured.push('claude');
-    return { product: 'orbit-handoff', schema: 2, configuredAgents: configured, additions: parsed.additions };
-  }
-
-  if (parsed.schema !== 2 || !Array.isArray(parsed.configuredAgents) ||
-      parsed.configuredAgents.some(agent => !['codex', 'claude'].includes(agent))) {
-    throw new Error(`Unsupported Orbit Thread state: ${p}`);
-  }
-
+  const parsed = JSON.parse(read(source));
+  if (!parsed.additions || typeof parsed.additions !== 'object' || Array.isArray(parsed.additions)) throw new Error(`Invalid Orbit Thread state: ${source}`);
   for (const [name, addition] of Object.entries(parsed.additions)) {
-    if (!['AGENTS.md', 'CLAUDE.md', '.gitignore'].includes(name) ||
-        typeof addition.inserted !== 'string' || typeof addition.created !== 'boolean') {
-      throw new Error(`Invalid Orbit Thread ownership entry: ${p}`);
+    if (!['AGENTS.md', 'CLAUDE.md', '.gitignore'].includes(name) || typeof addition.inserted !== 'string' || typeof addition.created !== 'boolean') {
+      throw new Error(`Invalid Orbit Thread ownership entry: ${source}`);
     }
   }
 
-  return parsed;
+  if (parsed.product === 'orbit-thread' && parsed.schema === 3) {
+    if (!Array.isArray(parsed.configuredAgents) || parsed.configuredAgents.some(agent => !['codex', 'claude'].includes(agent))) throw new Error(`Invalid Orbit Thread state: ${source}`);
+    return { state: parsed, source };
+  }
+
+  if (parsed.product === 'orbit-handoff' && [1, 2].includes(parsed.schema)) {
+    const configuredAgents = parsed.schema === 1
+      ? [...(parsed.additions['AGENTS.md'] ? ['codex'] : []), ...(parsed.additions['CLAUDE.md'] ? ['claude'] : [])]
+      : parsed.configuredAgents;
+    if (!Array.isArray(configuredAgents) || configuredAgents.some(agent => !['codex', 'claude'].includes(agent))) throw new Error(`Invalid legacy Orbit Handoff state: ${source}`);
+    return {
+      state: { product: 'orbit-thread', schema: 3, configuredAgents: [...new Set(configuredAgents)], additions: parsed.additions },
+      source,
+    };
+  }
+
+  throw new Error(`Unsupported Orbit Thread state: ${source}`);
 }
 
-function persistState(root, state) {
+function persistState(root, state, source = null) {
   const p = statePath(root);
   if (Object.keys(state.additions).length || state.configuredAgents.length) {
     atomicWrite(p, JSON.stringify(state, null, 2) + '\n');
@@ -202,13 +210,18 @@ function persistState(root, state) {
     const dir = path.dirname(p);
     if (exists(dir) && fs.readdirSync(dir).length === 0) fs.rmdirSync(dir);
   }
+  const legacy = legacyStatePath(root);
+  if (source === legacy && exists(legacy)) {
+    fs.unlinkSync(legacy);
+    const dir = path.dirname(legacy);
+    if (exists(dir) && fs.readdirSync(dir).length === 0) fs.rmdirSync(dir);
+  }
 }
-
 function desiredIgnoreBlock(before) {
   const lines = before.split(/\r?\n/);
   const missing = [];
   if (!lines.includes('HANDOFF-STATE.md') && !lines.includes('/HANDOFF-STATE.md')) missing.push('HANDOFF-STATE.md');
-  if (!lines.includes('.orbit-handoff/state.json') && !lines.includes('/.orbit-handoff/state.json')) missing.push('.orbit-handoff/state.json');
+  if (!lines.includes('.orbit-thread/state.json') && !lines.includes('/.orbit-thread/state.json')) missing.push('.orbit-thread/state.json');
   return missing.length ? `${ignoreBegin}\n${missing.join('\n')}\n${ignoreEnd}\n` : null;
 }
 
@@ -291,7 +304,8 @@ export function setupProject(root, selected = ['codex', 'claude']) {
   const agents = [...new Set(selected)];
   if (!agents.length || agents.some(agent => !['codex', 'claude'].includes(agent))) throw new Error('Agent must be codex, claude or both');
 
-  const state = loadState(root);
+  const loaded = loadState(root);
+  const state = loaded.state;
   const config = ensureProjectConfig(root);
   state.configuredAgents = [...new Set([...state.configuredAgents, ...agents])].sort();
 
@@ -302,7 +316,7 @@ export function setupProject(root, selected = ['codex', 'claude']) {
   const docs = ensureDocs(root);
 
   for (const change of planned) atomicWrite(change.p, change.content);
-  persistState(root, state);
+  persistState(root, state, loaded.source);
 
   return { root, managed: planned.map(({ name, action }) => ({ name, action })), docs };
 }
@@ -332,7 +346,8 @@ function removeAddition(root, state, name) {
 
 export function removeProjectConfig(root, selected = ['codex', 'claude']) {
   root = path.resolve(root);
-  const state = loadState(root);
+  const loaded = loadState(root);
+  const state = loaded.state;
   const remove = new Set(selected);
   state.configuredAgents = state.configuredAgents.filter(agent => !remove.has(agent));
 
@@ -343,7 +358,7 @@ export function removeProjectConfig(root, selected = ['codex', 'claude']) {
     results.push(removeAddition(root, state, '.gitignore'));
   }
 
-  persistState(root, state);
+  persistState(root, state, loaded.source);
   return results;
 }
 
@@ -360,9 +375,11 @@ function gitTracked(root, relative) {
 
 export function checkProject(root, selected = ['codex', 'claude']) {
   root = path.resolve(root);
-  const state = loadState(root);
+  const loaded = loadState(root);
+  const state = loaded.state;
   const messages = [];
   let ok = true;
+  if (loaded.source === legacyStatePath(root)) { messages.push('project state: legacy Orbit Handoff state detected; run setup to migrate'); ok = false; }
 
   try {
     const config = readProjectConfig(root);
@@ -392,9 +409,9 @@ export function checkProject(root, selected = ['codex', 'claude']) {
   const ignore = read(path.join(root, '.gitignore'));
   const ignoreLines = ignore.split(/\r?\n/);
   const handoffIgnored = ignoreLines.includes('HANDOFF-STATE.md') || ignoreLines.includes('/HANDOFF-STATE.md');
-  const stateIgnored = ignoreLines.includes('.orbit-handoff/state.json') || ignoreLines.includes('/.orbit-handoff/state.json');
+  const stateIgnored = ignoreLines.includes('.orbit-thread/state.json') || ignoreLines.includes('/.orbit-thread/state.json');
   messages.push(`HANDOFF-STATE.md: ${handoffIgnored ? 'ignored' : 'ignore rule missing'}`);
-  messages.push(`.orbit-handoff/state.json: ${stateIgnored ? 'ignored' : 'ignore rule missing'}`);
+  messages.push(`.orbit-thread/state.json: ${stateIgnored ? 'ignored' : 'ignore rule missing'}`);
   if (!handoffIgnored || !stateIgnored) ok = false;
 
   if (gitTracked(root, 'HANDOFF-STATE.md')) {
