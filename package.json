@@ -1,23 +1,27 @@
 {
-  "name": "orbit-handoff",
+  "name": "orbit-thread",
   "version": "1.1.0",
-  "description": "Set up token-efficient coding continuity and carry verified state between sessions.",
+  "description": "Token-efficient project setup, checkpoints and coding-session continuity for Codex and Claude Code.",
   "type": "module",
-  "bin": { "orbit-handoff": "bin/orbit-handoff.mjs" },
+  "bin": {
+    "orbit-thread": "bin/orbit-thread.mjs",
+    "orbit-handoff": "bin/orbit-thread.mjs"
+  },
   "engines": { "node": ">=20" },
   "os": ["darwin", "linux"],
   "license": "MIT",
   "author": "Shabih Anwar",
-  "repository": { "type": "git", "url": "git+https://github.com/shab1h-gh/orbit-handoff.git" },
-  "homepage": "https://github.com/shab1h-gh/orbit-handoff#readme",
-  "bugs": { "url": "https://github.com/shab1h-gh/orbit-handoff/issues" },
-  "keywords": ["codex", "claude-code", "agent-skills", "handoff", "continuity", "project-setup", "context-efficiency"],
+  "repository": { "type": "git", "url": "git+https://github.com/shab1h-gh/orbit-thread.git" },
+  "homepage": "https://github.com/shab1h-gh/orbit-thread#readme",
+  "bugs": { "url": "https://github.com/shab1h-gh/orbit-thread/issues" },
+  "keywords": ["codex", "claude-code", "agent-skills", "continuity", "project-setup", "handoff", "context-efficiency"],
   "files": ["bin/", "lib/", "plugin/", "docs/", "README.md", "LICENSE", "SECURITY.md", "PRIVACY.md", "CONTRIBUTING.md", "CHANGELOG.md"],
   "scripts": {
     "test": "node --test",
     "validate": "node scripts/validate.mjs",
     "build:plugin": "python3 scripts/package_plugin.py",
-    "scan:public": "node scripts/scan-public.mjs"
+    "scan:public": "node scripts/scan-public.mjs",
+    "smoke:pack": "node scripts/smoke-pack.mjs"
   },
   "publishConfig": { "access": "public", "registry": "https://registry.npmjs.org/" }
 }
