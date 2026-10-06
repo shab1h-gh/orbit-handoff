@@ -110,3 +110,51 @@ native agent discovery test or an authenticated agent-driven handoff.
 These are pre-publication checks. After publication, verify `latest` resolves to
 1.0.1 and repeat the public-registry smoke test; report its result in the GitHub
 release. The original CI result above covers v1.0.0; it is not a new 1.0.1 CI claim.
+
+
+## v1.1.0 feature validation
+
+Validation work for the Orbit Setup feature release began on 6 October 2026.
+
+### Focused local checks completed
+
+A disposable local fixture exercised the new dual-skill/setup implementation:
+
+- Orbit Setup creates missing PRODUCT, DESIGN, ARCHITECTURE, SECURITY and ROADMAP
+  living-doc templates.
+- Existing equivalent project docs and unrelated AGENTS.md content are preserved.
+- Repeated setup is idempotent and does not duplicate managed blocks.
+- Setup works before Git is initialised by treating the current directory as the
+  project root.
+- HANDOFF-STATE.md is not created by setup.
+- The updated dual-skill manifest/metadata validation passed locally.
+- The portable plugin packager built `orbit-handoff-plugin-1.1.0.zip` locally
+  with both skill entrypoints present.
+- Eight focused local setup/runtime checks passed in the isolated validation
+  fixture used while preparing the feature branch.
+
+These focused checks are not a substitute for the repository's full CI matrix.
+The full existing test suite, macOS/Linux CI, npm tarball smoke test, current
+Claude native plugin validation, Codex native skill discovery and public-registry
+smoke test must pass before v1.1.0 is published/tagged.
+
+### Invocation-policy change
+
+The v1.1.0 canonical handoff skill intentionally removes Claude's
+`disable-model-invocation: true` and sets OpenAI skill metadata
+`allow_implicit_invocation: true`.
+
+This allows a configured project's AGENTS.md/CLAUDE.md rules to request a handoff
+proactively after meaningful verified milestones and completed coding tasks. The
+skill remains manually invokable as `$handoff` / `/handoff` as before.
+
+Orbit Setup is separately exposed as `$orbit-setup` / `/orbit-setup` for
+standalone installs and as the corresponding namespaced command in the Claude
+plugin.
+
+### Provider-directory status
+
+Provider review state is not inferable from this repository. OpenAI and
+Anthropic publisher dashboards are authoritative for any submission already made.
+GitHub/npm availability and local validation do not imply public-directory
+approval.
