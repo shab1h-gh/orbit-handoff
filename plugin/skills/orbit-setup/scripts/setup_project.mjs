@@ -3,40 +3,41 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { ensureProjectConfig, readProjectConfig, renderSubagentBlock } from './project_config.mjs';
 
 const begin = '<!-- orbit-handoff:start -->';
 const end = '<!-- orbit-handoff:end -->';
 const ignoreBegin = '# orbit-handoff:start';
 const ignoreEnd = '# orbit-handoff:end';
 
-const agentsBlock = `${begin}
-## Orbit Handoff workflow
+const agentsBlock = config => `${begin}
+## Orbit Thread workflow
 
-- Treat tracked source and relevant living docs as durable truth. \`HANDOFF-STATE.md\` is concise current execution state, never project history.
-- Inspect the current Git state and read relevant tracked project documentation. After a fresh, cleared or recovered session, read \`HANDOFF-STATE.md\` if present, then use Git status/diff/recent log and only the docs/source needed for the next unfinished task.
-- Load context selectively. Do not scan generated/vendor/build output or reread unchanged files without a reason.
-- Living docs are current truth, not changelogs. Use existing \`PRODUCT.md\`, \`DESIGN.md\`, \`ARCHITECTURE.md\`, \`SECURITY.md\` and \`ROADMAP.md\` files in the root or \`docs/\`. Update affected sections in place as soon as completed work changes current truth. Never append session history; Git is history. Do not rewrite applied migrations.
-- Use the installed Orbit Handoff skill for checkpoints. Run it after each completed user task and after a meaningful, verified milestone in long-running work; also before \`/clear\`, session end, or a usage/context stop when warning is available. Do not checkpoint trivial edits.
-- Checkpoints overwrite \`HANDOFF-STATE.md\`. At an intermediate checkpoint, continue the remaining requested work afterwards. At a completed task, checkpoint before the final reply.
-- Subagents: default to none. Use at most 2 total/concurrently, only for genuinely separable work where isolated context materially helps. No recursive subagents. The main agent owns integration and final decisions.
+- Durable truth is the tracked source plus current living docs. `HANDOFF-STATE.md` is concise execution state only, never project history.
+- Before substantial work, inspect current Git state and load context selectively:
+  - product behaviour, scope or copy → `PRODUCT.md`;
+  - UI/UX → `DESIGN.md`;
+  - runtime, data flow, infrastructure or integrations → `ARCHITECTURE.md`;
+  - auth, tenancy, secrets, public entry points or other security-sensitive work → `SECURITY.md`;
+  - future planning only → `ROADMAP.md`.
+  Use the matching file in `docs/` or the project root. For cross-cutting work, read only the additional docs it actually touches.
+- Inspect only source files needed for the task. Do not broadly scan generated, vendor, dependency, build, coverage or cache directories, and do not reread unchanged context without a reason.
+- Living docs describe CURRENT truth. After verified work changes that truth, update affected existing sections in place during the same milestone. Never append session diaries or duplicate superseded sections; Git is history. Never rewrite an applied migration.
+- Run the smallest relevant verification before claiming a milestone or task complete. Never claim a test, deployment, commit, push or external action that did not run.
+- Run the installed `handoff` skill after a meaningful verified milestone that changed repository state or durable project truth, and after each completed coding task with such changes before the final reply. Also checkpoint before `/clear`, session end, or a usage/context stop when warning is available. Skip read-only questions and trivial edits. Intermediate checkpoints must not stop unfinished work.
+- Each checkpoint overwrites `HANDOFF-STATE.md`. After a fresh/cleared/recovered session: read the handoff once if present, inspect branch/status/diff/recent log, read only relevant living docs, then inspect only source needed for the exact next action. Do not reconstruct old conversation history or repeat completed work.
+${renderSubagentBlock(config)}
 - Read-only Git inspection is allowed. Commit, push, merge, rebase, reset, branch deletion or other Git writes require explicit authority in the current request. Never force-push or destructively clean without explicit authority.
-- Run the smallest relevant verification before claiming completion. Never claim tests, deployments or actions that did not run.
-- Never place secrets, credentials, environment values, personal data or sensitive production data in living docs or \`HANDOFF-STATE.md\`.
+- Never place secrets, credentials, environment values, private keys, recovery codes, personal data or sensitive production data in living docs or `HANDOFF-STATE.md`.
 ${end}
 `;
 
 const claudeBlock = `${begin}
-## Orbit Handoff
+## Orbit Thread
 
-Read and follow \`AGENTS.md\` for the project workflow, context-loading, checkpoint and subagent rules. On a fresh or recovered session, use \`HANDOFF-STATE.md\` plus current Git state and only the relevant living docs instead of reconstructing old conversation history.
+Read and follow `AGENTS.md` for project workflow, selective context loading, subagents and checkpoints. On a fresh or recovered session, resume from `HANDOFF-STATE.md` + current Git state + only the relevant living docs instead of reconstructing old conversation history.
 ${end}
 `;
-
-const ignoreBlock = `${ignoreBegin}
-HANDOFF-STATE.md
-${ignoreEnd}
-`;
-
 const templates = {
   'PRODUCT.md': `# Product
 
@@ -139,7 +140,7 @@ function safePath(p) {
 function atomicWrite(p, content) {
   safePath(p);
   fs.mkdirSync(path.dirname(p), { recursive: true });
-  const temporary = path.join(path.dirname(p), `.orbit-handoff-${crypto.randomUUID()}.tmp`);
+  const temporary = path.join(path.dirname(p), `.orbit-thread-${crypto.randomUUID()}.tmp`);
   try {
     fs.writeFileSync(temporary, content, { flag: 'wx', mode: exists(p) ? fs.statSync(p).mode & 0o777 : 0o644 });
     fs.renameSync(temporary, p);
@@ -167,7 +168,7 @@ function loadState(root) {
   if (!exists(p)) return { product: 'orbit-handoff', schema: 2, configuredAgents: [], additions: {} };
   const parsed = JSON.parse(read(p));
   if (parsed.product !== 'orbit-handoff' || !parsed.additions || typeof parsed.additions !== 'object' || Array.isArray(parsed.additions)) {
-    throw new Error(`Invalid Orbit Handoff state: ${p}`);
+    throw new Error(`Invalid Orbit Thread state: ${p}`);
   }
 
   if (parsed.schema === 1) {
@@ -179,13 +180,13 @@ function loadState(root) {
 
   if (parsed.schema !== 2 || !Array.isArray(parsed.configuredAgents) ||
       parsed.configuredAgents.some(agent => !['codex', 'claude'].includes(agent))) {
-    throw new Error(`Unsupported Orbit Handoff state: ${p}`);
+    throw new Error(`Unsupported Orbit Thread state: ${p}`);
   }
 
   for (const [name, addition] of Object.entries(parsed.additions)) {
     if (!['AGENTS.md', 'CLAUDE.md', '.gitignore'].includes(name) ||
         typeof addition.inserted !== 'string' || typeof addition.created !== 'boolean') {
-      throw new Error(`Invalid Orbit Handoff ownership entry: ${p}`);
+      throw new Error(`Invalid Orbit Thread ownership entry: ${p}`);
     }
   }
 
@@ -203,10 +204,18 @@ function persistState(root, state) {
   }
 }
 
-function desiredBlock(name) {
-  if (name === 'AGENTS.md') return agentsBlock;
+function desiredIgnoreBlock(before) {
+  const lines = before.split(/\r?\n/);
+  const missing = [];
+  if (!lines.includes('HANDOFF-STATE.md') && !lines.includes('/HANDOFF-STATE.md')) missing.push('HANDOFF-STATE.md');
+  if (!lines.includes('.orbit-handoff/state.json') && !lines.includes('/.orbit-handoff/state.json')) missing.push('.orbit-handoff/state.json');
+  return missing.length ? `${ignoreBegin}\n${missing.join('\n')}\n${ignoreEnd}\n` : null;
+}
+
+function desiredBlock(name, config, before = '') {
+  if (name === 'AGENTS.md') return agentsBlock(config);
   if (name === 'CLAUDE.md') return claudeBlock;
-  if (name === '.gitignore') return ignoreBlock;
+  if (name === '.gitignore') return desiredIgnoreBlock(before);
   throw new Error(`Unknown managed file: ${name}`);
 }
 
@@ -214,7 +223,7 @@ function markers(name) {
   return name === '.gitignore' ? [ignoreBegin, ignoreEnd] : [begin, end];
 }
 
-function planManaged(root, state, name) {
+function planManaged(root, state, name, config) {
   const p = path.join(root, name);
   safePath(p);
   const before = read(p);
@@ -222,30 +231,35 @@ function planManaged(root, state, name) {
 
   if (owned) {
     if (!before.includes(owned.inserted) || before.indexOf(owned.inserted) !== before.lastIndexOf(owned.inserted)) {
-      throw new Error(`Managed Orbit Handoff block was edited or duplicated in ${name}; review it before running setup.`);
+      throw new Error(`Managed Orbit Thread block was edited or duplicated in ${name}; review it before running setup.`);
     }
     const [first, last] = markers(name);
     if (before.split(first).length !== 2 || before.split(last).length !== 2) {
-      throw new Error(`Managed Orbit Handoff block was edited or duplicated in ${name}; review it before running setup.`);
+      throw new Error(`Managed Orbit Thread block was edited or duplicated in ${name}; review it before running setup.`);
     }
     const previousInserted = owned.inserted;
     const leading = previousInserted.match(/^(?:\r?\n)*/)?.[0] ?? '';
-    const inserted = leading + desiredBlock(name);
+    const baseText = before.slice(0, before.indexOf(previousInserted)) + before.slice(before.indexOf(previousInserted) + previousInserted.length);
+    const rawDesired = desiredBlock(name, config, baseText);
+    if (!rawDesired) {
+      delete state.additions[name];
+      return { p, name, content: baseText, action: 'updated' };
+    }
+    const inserted = leading + rawDesired;
     if (inserted === previousInserted) return null;
     state.additions[name].inserted = inserted;
     return { p, name, content: before.replace(previousInserted, inserted), action: 'updated' };
   }
 
-  if (name === '.gitignore' && before.split(/\r?\n/).some(line => line === 'HANDOFF-STATE.md' || line === '/HANDOFF-STATE.md')) {
-    return null;
-  }
 
   const [first, last] = markers(name);
   if (before.includes(first) || before.includes(last)) {
-    throw new Error(`Unowned or malformed Orbit Handoff block in ${name}; refusing to overwrite it.`);
+    throw new Error(`Unowned or malformed Orbit Thread block in ${name}; refusing to overwrite it.`);
   }
 
-  const inserted = (before ? (before.endsWith('\n') ? '\n' : '\n\n') : '') + desiredBlock(name);
+  const rawDesired = desiredBlock(name, config, before);
+  if (!rawDesired) return null;
+  const inserted = (before ? (before.endsWith('\n') ? '\n' : '\n\n') : '') + rawDesired;
   state.additions[name] = { inserted, created: !exists(p) };
   return { p, name, content: before + inserted, action: exists(p) ? 'updated' : 'created' };
 }
@@ -278,12 +292,13 @@ export function setupProject(root, selected = ['codex', 'claude']) {
   if (!agents.length || agents.some(agent => !['codex', 'claude'].includes(agent))) throw new Error('Agent must be codex, claude or both');
 
   const state = loadState(root);
+  const config = ensureProjectConfig(root);
   state.configuredAgents = [...new Set([...state.configuredAgents, ...agents])].sort();
 
   const names = ['AGENTS.md', '.gitignore'];
   if (state.configuredAgents.includes('claude')) names.push('CLAUDE.md');
 
-  const planned = names.map(name => planManaged(root, state, name)).filter(Boolean);
+  const planned = names.map(name => planManaged(root, state, name, config)).filter(Boolean);
   const docs = ensureDocs(root);
 
   for (const change of planned) atomicWrite(change.p, change.content);
@@ -332,11 +347,34 @@ export function removeProjectConfig(root, selected = ['codex', 'claude']) {
   return results;
 }
 
+function gitTracked(root, relative) {
+  try {
+    execFileSync('git', ['ls-files', '--error-unmatch', relative], {
+      cwd: root, stdio: ['ignore', 'ignore', 'ignore'],
+    });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export function checkProject(root, selected = ['codex', 'claude']) {
   root = path.resolve(root);
   const state = loadState(root);
   const messages = [];
   let ok = true;
+
+  try {
+    const config = readProjectConfig(root);
+    messages.push(`config: valid (max subagents ${config.subagents.max})`);
+    if (!exists(path.join(root, '.orbit-thread/config.json'))) {
+      messages.push('config: default only; run setup to create .orbit-thread/config.json');
+      ok = false;
+    }
+  } catch (error) {
+    messages.push(`config: invalid (${error.message})`);
+    ok = false;
+  }
 
   for (const agent of selected) {
     const configured = state.configuredAgents.includes(agent);
@@ -351,20 +389,39 @@ export function checkProject(root, selected = ['codex', 'claude']) {
     if (!intact) ok = false;
   }
 
-  const handoffIgnored = read(path.join(root, '.gitignore')).split(/\r?\n/)
-    .some(line => line === 'HANDOFF-STATE.md' || line === '/HANDOFF-STATE.md');
-  messages.push(`HANDOFF-STATE.md: ${handoffIgnored ? 'ignore rule present' : 'ignore rule missing'}`);
-  if (!handoffIgnored) ok = false;
+  const ignore = read(path.join(root, '.gitignore'));
+  const ignoreLines = ignore.split(/\r?\n/);
+  const handoffIgnored = ignoreLines.includes('HANDOFF-STATE.md') || ignoreLines.includes('/HANDOFF-STATE.md');
+  const stateIgnored = ignoreLines.includes('.orbit-handoff/state.json') || ignoreLines.includes('/.orbit-handoff/state.json');
+  messages.push(`HANDOFF-STATE.md: ${handoffIgnored ? 'ignored' : 'ignore rule missing'}`);
+  messages.push(`.orbit-handoff/state.json: ${stateIgnored ? 'ignored' : 'ignore rule missing'}`);
+  if (!handoffIgnored || !stateIgnored) ok = false;
+
+  if (gitTracked(root, 'HANDOFF-STATE.md')) {
+    messages.push('HANDOFF-STATE.md: tracked by Git (should remain local)');
+    ok = false;
+  }
 
   for (const name of Object.keys(templates)) {
-    const present = exists(path.join(root, name)) || exists(path.join(root, 'docs', name));
-    messages.push(`${name}: ${present ? 'present' : 'missing'}`);
-    if (!present) ok = false;
+    const rootFile = exists(path.join(root, name));
+    const docsFile = exists(path.join(root, 'docs', name));
+    const present = rootFile || docsFile;
+    messages.push(`${name}: ${present ? 'present' : 'missing'}${rootFile && docsFile ? ' (duplicate root/docs copies)' : ''}`);
+    if (!present || (rootFile && docsFile)) ok = false;
+  }
+
+  const handoff = path.join(root, 'HANDOFF-STATE.md');
+  if (exists(handoff)) {
+    const text = read(handoff);
+    const lines = text ? text.split(/\r?\n/).length - (text.endsWith('\n') ? 1 : 0) : 0;
+    messages.push(`handoff: ${lines} line${lines === 1 ? '' : 's'}`);
+    if (!text || lines > 50) ok = false;
+  } else {
+    messages.push('handoff: not created yet');
   }
 
   return { ok, messages };
 }
-
 function parseAgent(value) {
   if (value === 'both') return ['codex', 'claude'];
   if (['codex', 'claude'].includes(value)) return [value];
@@ -387,7 +444,7 @@ async function runCli(argv) {
   if (command === 'setup') {
     const result = setupProject(root, selected);
     for (const item of [...result.managed, ...result.docs]) console.log(`${item.action}: ${item.name}`);
-    console.log('Orbit Setup complete. HANDOFF-STATE.md will be created by the handoff skill at the first checkpoint.');
+    console.log('Orbit Thread setup complete. HANDOFF-STATE.md will be created by the handoff skill at the first checkpoint.');
     return;
   }
   if (command === 'check') {
