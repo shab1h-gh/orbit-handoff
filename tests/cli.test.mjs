@@ -225,13 +225,15 @@ test('init upgrades an intact recorded managed block without changing surroundin
   const p = path.join(root, '.orbit-handoff/state.json');
   const state = JSON.parse(fs.readFileSync(p, 'utf8'));
   const old = state.additions['AGENTS.md'].inserted.replace('Inspect the current Git state', 'Inspect Git');
+  assert.notEqual(old, state.additions['AGENTS.md'].inserted);
   fs.writeFileSync(path.join(root, 'AGENTS.md'), read(root, 'AGENTS.md').replace(state.additions['AGENTS.md'].inserted, old));
   state.additions['AGENTS.md'].inserted = old;
   fs.writeFileSync(p, JSON.stringify(state));
   ok(run(root, 'init', '--agent', 'codex', '--yes'));
   assert.equal(read(root, 'AGENTS.md').startsWith('Keep existing content.\n'), true);
-  assert.equal(read(root, 'AGENTS.md').includes('Load context selectively'), true);
-  assert.equal(read(root, 'AGENTS.md').includes('Inspect Git'), false);
+  const upgradedState = JSON.parse(fs.readFileSync(p, 'utf8'));
+  assert.notEqual(upgradedState.additions['AGENTS.md'].inserted, old);
+  assert.equal(read(root, 'AGENTS.md').includes(upgradedState.additions['AGENTS.md'].inserted), true);
   assert.equal(read(root, 'AGENTS.md').split('orbit-handoff:start').length, 2);
   ok(run(root, 'uninstall', '--agent', 'codex', '--yes'));
   assert.equal(read(root, 'AGENTS.md'), 'Keep existing content.\n');
