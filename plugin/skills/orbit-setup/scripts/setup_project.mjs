@@ -164,7 +164,7 @@ function statePath(root) {
 }
 
 function legacyStatePath(root) {
-  return path.join(root, '.orbit-thread/state.json');
+  return path.join(root, '.orbit-handoff/state.json');
 }
 
 function loadState(root) {
