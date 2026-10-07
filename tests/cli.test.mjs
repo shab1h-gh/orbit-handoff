@@ -61,7 +61,7 @@ test('init preserves existing content, adds a single block, ignores only intende
   for (const [name, content] of Object.entries(originals)) {
     assert.equal(read(root, name), first[name]);
     assert.equal(read(root, name).startsWith(content), true);
-    assert.equal((read(root, name).match(/orbit-handoff:start/g) ?? []).length, 1);
+    assert.equal((read(root, name).match(/orbit-thread:start/g) ?? []).length, 1);
   }
   assert.equal(spawnSync('git', ['check-ignore', 'HANDOFF-STATE.md'], { cwd: root }).status, 0);
   assert.equal(spawnSync('git', ['check-ignore', 'HANDOFF-STATE-other.md'], { cwd: root }).status, 1);
@@ -76,8 +76,9 @@ test('init never creates HANDOFF-STATE.md; selected uninstall preserves the othe
   assert.equal(fs.existsSync(path.join(root, 'HANDOFF-STATE.md')), false);
   fs.writeFileSync(path.join(root, 'HANDOFF-STATE.md'), 'keep local evidence');
   ok(run(root, 'uninstall', '--agent', 'codex', '--yes'));
-  assert.equal(fs.existsSync(path.join(root, 'AGENTS.md')), false);
-  assert.equal(read(root, 'CLAUDE.md').includes('Orbit Handoff'), true);
+  // AGENTS.md remains while Claude is still configured because it carries the shared Orbit workflow rules.
+  assert.equal(read(root, 'AGENTS.md').includes('Orbit Thread workflow'), true);
+  assert.equal(read(root, 'CLAUDE.md').includes('Orbit Thread'), true);
   assert.equal(read(root, '.gitignore').includes('HANDOFF-STATE.md'), true);
   ok(run(root, 'uninstall', '--agent', 'claude', '--yes'));
   assert.equal(fs.existsSync(path.join(root, 'CLAUDE.md')), false);
@@ -90,7 +91,9 @@ test('existing user-authored ignore rule is neither duplicated nor removed', t =
   const original = '# Local state\nHANDOFF-STATE.md\n';
   fs.writeFileSync(path.join(root, '.gitignore'), original);
   ok(run(root, 'init', '--yes'));
-  assert.equal(read(root, '.gitignore'), original);
+  assert.equal(read(root, '.gitignore').startsWith(original), true);
+  assert.equal(read(root, '.gitignore').includes('.orbit-thread/state.json'), true);
+  assert.equal((read(root, '.gitignore').match(/orbit-thread:start/g) ?? []).length, 1);
   ok(run(root, 'uninstall', '--yes'));
   assert.equal(read(root, '.gitignore'), original);
 });
@@ -128,7 +131,7 @@ test('edited installed skill is preserved on update, reinstall and uninstall', t
 test('edited managed instructions survive uninstall; init refuses duplication', t => {
   const root = fixture(t);
   ok(run(root, 'init', '--yes'));
-  fs.writeFileSync(path.join(root, 'AGENTS.md'), read(root, 'AGENTS.md').replace('Inspect the current Git state', 'Inspect my preferred state'));
+  fs.writeFileSync(path.join(root, 'AGENTS.md'), read(root, 'AGENTS.md').replace('Durable truth is', 'My durable truth is'));
   const edited = read(root, 'AGENTS.md');
   assert.equal(run(root, 'init', '--yes').status, 1);
   assert.equal(read(root, 'AGENTS.md'), edited);
@@ -221,16 +224,19 @@ test('init upgrades an intact recorded managed block without changing surroundin
   const root = fixture(t);
   fs.writeFileSync(path.join(root, 'AGENTS.md'), 'Keep existing content.\n');
   ok(run(root, 'init', '--agent', 'codex', '--yes'));
-  const p = path.join(root, '.orbit-handoff/state.json');
+  const p = path.join(root, '.orbit-thread/state.json');
   const state = JSON.parse(fs.readFileSync(p, 'utf8'));
-  const old = state.additions['AGENTS.md'].inserted.replace('Inspect the current Git state', 'Inspect Git');
+  const old = state.additions['AGENTS.md'].inserted.replace('Durable truth is', 'Legacy truth is');
+  assert.notEqual(old, state.additions['AGENTS.md'].inserted);
   fs.writeFileSync(path.join(root, 'AGENTS.md'), read(root, 'AGENTS.md').replace(state.additions['AGENTS.md'].inserted, old));
   state.additions['AGENTS.md'].inserted = old;
   fs.writeFileSync(p, JSON.stringify(state));
   ok(run(root, 'init', '--agent', 'codex', '--yes'));
   assert.equal(read(root, 'AGENTS.md').startsWith('Keep existing content.\n'), true);
-  assert.equal(read(root, 'AGENTS.md').includes('Inspect the current Git state'), true);
-  assert.equal(read(root, 'AGENTS.md').split('orbit-handoff:start').length, 2);
+  const upgradedState = JSON.parse(fs.readFileSync(p, 'utf8'));
+  assert.notEqual(upgradedState.additions['AGENTS.md'].inserted, old);
+  assert.equal(read(root, 'AGENTS.md').includes(upgradedState.additions['AGENTS.md'].inserted), true);
+  assert.equal(read(root, 'AGENTS.md').split('orbit-thread:start').length, 2);
   ok(run(root, 'uninstall', '--agent', 'codex', '--yes'));
   assert.equal(read(root, 'AGENTS.md'), 'Keep existing content.\n');
 });

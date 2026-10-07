@@ -1,6 +1,6 @@
 interface:
-  display_name: "Orbit Handoff"
-  short_description: "Carry verified coding state into the next session"
-  default_prompt: "Use $handoff to save the verified state of this session and the immediate next steps."
+  display_name: "Orbit Thread Handoff"
+  short_description: "Save verified coding state"
+  default_prompt: "Use $handoff to save the verified current state and immediate next steps."
 policy:
-  allow_implicit_invocation: false
+  allow_implicit_invocation: true

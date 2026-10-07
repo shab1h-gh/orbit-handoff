@@ -1,69 +1,72 @@
 # Directory submission
 
-Prepared on 5 October 2026. No public directory submission has been made, and no
-approval or listing is implied by local validation.
+Updated 7 October 2026.
 
-## OpenAI public Plugins Directory
+Provider-directory review is separate from npm, GitHub and standalone installation.
 
-Release artifact: `orbit-handoff-plugin-1.0.1.zip`. Build it with
-`npm run build:plugin`; the output is `dist/orbit-handoff-plugin-1.0.1.zip`.
-The ZIP has portable `plugin.json` at its root, `skills/handoff`, OpenAI interface
-metadata, a real PNG icon and the Claude compatibility manifest. It contains no
-MCP server, hooks or account configuration. The category is Developer Tools.
+## OpenAI / ChatGPT Plugins Directory
 
-Publisher steps, following the current [OpenAI submission guide](https://developers.openai.com/plugins/deploy/submission):
+Orbit Thread v1.1.0 is submitted as:
 
-1. Open [OpenAI Plugins](https://platform.openai.com/plugins) under the intended
-   organisation/project. Confirm publishing permission and complete developer
-   identity verification as Shabih Anwar.
-2. Choose **Upload new or existing plugin**, select the verified identity and
-   upload the release ZIP.
-3. Review automated metadata/skill findings, fix blocking errors, and check the
-   imported listing. This is skills-only; there is no MCP connection to configure.
-4. Complete any review fields and policy attestations requested in the dashboard,
-   then submit the draft for review.
-5. After approval, select **Publish plugin**. Only then advertise a directory
-   listing. Local schema checks cannot replace dashboard validation or review.
+```text
+dist/orbit-thread-plugin-1.1.0.zip
+```
 
-Suggested review exercise: work in a disposable Git repository with a POSIX shell;
-explicitly invoke `handoff` after a session with known changes and tests. Confirm
-that the resulting file reflects only that evidence, is at most 50 lines and
-overwrites prior state. Check that 51 lines and synthetic secret-bearing input
-are rejected without losing the old file. No reviewer account is needed for the
-plugin itself. The host agent still needs its normal authentication.
+Build it with:
 
-## Anthropic directory / community distribution
+```sh
+npm run build:plugin
+```
 
-The public GitHub marketplace is separate from Anthropic directory approval.
-Repository: `shab1h-gh/orbit-handoff`. Plugin folder: `plugin`. Release tag:
-`v1.0.1`. Validate with:
+The ZIP contains portable `plugin.json`, both canonical skills, OpenAI interface metadata, the Orbit Setup onboarding skill, listing icon and compatibility metadata. Orbit Thread needs no MCP server or external account.
+
+### Submission flow
+
+1. Complete release validation and build the final v1.1.0 ZIP from the release commit/tag.
+2. Open the OpenAI Plugins publisher dashboard:
+   `https://platform.openai.com/plugins`
+3. Upload `orbit-thread-plugin-1.1.0.zip`.
+4. Complete automated checks and resolve genuine findings.
+5. Review listing metadata and required policy/data-handling declarations.
+6. Choose **Submit for review**.
+7. Track **Review status** in the same dashboard.
+8. After approval, choose **Publish plugin** when ready.
+
+Changing bundled skills or plugin metadata requires a newly uploaded ZIP; changing GitHub alone does not update an already uploaded package.
+
+Only advertise public availability after the dashboard says the plugin is published.
+
+## Anthropic / Claude public directory
+
+The GitHub marketplace route and Anthropic's public Claude directory are separate.
+
+After the repository rename, direct GitHub installation is:
+
+```text
+/plugin marketplace add shab1h-gh/orbit-thread
+/plugin install orbit-thread@orbit-thread
+```
+
+or:
+
+```sh
+claude plugin marketplace add shab1h-gh/orbit-thread
+claude plugin install orbit-thread@orbit-thread
+```
+
+For public-directory publication, use Anthropic's developer directory submission portal. Anthropic announced that developers on paid Claude plans can submit plugins, track review and see usage after publication.
+
+Before submission:
 
 ```sh
 claude plugin validate ./plugin --strict
 claude plugin validate . --strict
 ```
 
-The current [Anthropic submission route](https://claude.com/docs/plugins/submit)
-is the developer portal, replacing earlier submission forms:
+Then use the directory management/submission surface in Claude, connect the GitHub account that owns `shab1h-gh/orbit-thread`, select the repository/plugin, complete the listing details and submit it for review. Use the immutable v1.1.0 release/tag once created.
 
-1. Open [the developer portal](https://claude.ai/directory/manage) with an eligible
-   paid plan/role and connect the GitHub account that can push to this repository.
-2. Select **Submit new → Plugin bundle**. Enter `shab1h-gh/orbit-handoff`, plugin
-   path `plugin`, and tag `v1.0.1` for this immutable release (or `main` if you want
-   future branch updates reviewed).
-3. Run **Validate**, resolve blocking findings and check the listing details.
-4. Complete data-handling questions, the publisher contact email and compliance
-   acknowledgements. Orbit Handoff has no remote service or telemetry; its state
-   is local and remains until the user removes it.
-5. Review and submit. Wait for the provider's checks/review, then follow the
-   portal's publishing step. Do not claim approval before it is granted.
+A successful GitHub marketplace installation does not mean the plugin is approved for Anthropic's public directory.
 
-The official `claude-plugins-official` marketplace has a separate partner route;
-the current documentation directs publishers to their Anthropic partner contact.
-No email, form or third-party submission has been sent automatically.
+## General rule
 
-The [pre-submission checklist](https://claude.com/docs/plugins/pre-submission-checklist)
-also checks README and licence presence, file sizes and names, and credentials.
-The plugin README and licence are included, with no dependencies or executable
-downloads inside the plugin. The provider portal applies further checks and
-name-availability rules that the CLI cannot confirm locally.
+Provider dashboard state wins over repository documentation. Update these instructions in place if either provider changes its submission flow; Git history already records the old process.

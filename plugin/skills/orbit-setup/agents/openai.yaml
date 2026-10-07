@@ -1,0 +1,6 @@
+interface:
+  display_name: "Orbit Thread Setup"
+  short_description: "Prepare efficient coding continuity"
+  default_prompt: "Use $orbit-setup to prepare this project with lightweight living docs and Orbit Thread workflow rules."
+policy:
+  allow_implicit_invocation: true

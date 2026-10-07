@@ -110,3 +110,70 @@ native agent discovery test or an authenticated agent-driven handoff.
 These are pre-publication checks. After publication, verify `latest` resolves to
 1.0.1 and repeat the public-registry smoke test; report its result in the GitHub
 release. The original CI result above covers v1.0.0; it is not a new 1.0.1 CI claim.
+
+
+## v1.1.0 feature validation
+
+Validation completed on 7 October 2026 for the Orbit Thread feature release.
+
+### Verified in GitHub CI
+
+The final feature-branch workflow passed on macOS and Linux with Node.js 20 and 24.
+
+The workflow verified:
+
+- the complete Node test suite;
+- package/manifest validation;
+- public/privacy source scanning;
+- deterministic OpenAI/plugin ZIP generation;
+- `npm pack`;
+- a packed-tarball smoke test in a disposable Git repository.
+
+The packed smoke test exercised the actual `orbit-thread-1.1.0.tgz` through:
+
+- install for Codex and Claude;
+- setup;
+- Claude and Codex subagent configuration;
+- doctor;
+- update;
+- uninstall;
+- preservation of living project docs/config after uninstall.
+
+It also verified both canonical skills, the expected living-document templates, `.orbit-thread/config.json`, and that setup does not create `HANDOFF-STATE.md`.
+
+### Behaviour verified by tests
+
+Coverage includes:
+
+- Orbit Setup creation/idempotency and preservation of existing project docs/instructions;
+- selective project state and Git-ignore management;
+- Orbit Handoff → Orbit Thread project-state migration;
+- managed skill ownership/update/uninstall safeguards;
+- subagent model/reasoning configuration and AGENTS.md reflection;
+- doctor detection of duplicate root/docs living documents;
+- Handoff atomic overwrite, 50-line limit, secret-pattern rejection, failure preservation and no Git/network mutation.
+
+### Invocation policy
+
+The canonical Handoff skill intentionally omits Claude's former
+`disable-model-invocation: true` restriction and keeps OpenAI metadata
+`allow_implicit_invocation: true`.
+
+Configured Orbit Thread projects therefore permit proactive checkpoints after meaningful verified milestones and completed coding tasks, while manual `$handoff` / `/handoff` invocation remains supported.
+
+Orbit Setup remains separately exposed as `$orbit-setup` / `/orbit-setup`.
+
+### Remaining release-gate checks
+
+Before publishing/tagging v1.1.0:
+
+- validate the final plugin with a current Claude Code installation using `claude plugin validate`;
+- verify native Claude and Codex skill discovery against the final package where those CLIs are available;
+- publish `orbit-thread@1.1.0` and repeat the public-registry smoke test.
+
+Those native CLIs are not part of GitHub CI, so CI success does not claim those checks.
+
+### Provider directories
+
+OpenAI and Anthropic public-directory review is separate from npm/GitHub distribution. Their publisher dashboards are authoritative after submission; local validation does not imply approval.
+
