@@ -9,7 +9,7 @@
 - Create only missing lightweight PRODUCT, DESIGN, ARCHITECTURE, SECURITY and ROADMAP living docs while preserving existing equivalents.
 - Add selective context-loading, in-place living-doc updates, fresh-context recovery and bounded-subagent rules.
 - Add `configure` for project-specific subagent model/reasoning preferences stored in `.orbit-thread/config.json`.
-- Add `doctor` for continuity/config/document-health checks; keep `check` as an alias.
+- Add `doctor` for full continuity/config/document-health checks; keep `check` as the lightweight legacy managed-skill installation check.
 - Allow Handoff to be invoked implicitly at meaningful verified checkpoints and completed coding tasks.
 - Keep `HANDOFF-STATE.md` overwrite-only, evidence-only and capped at 50 lines.
 - Migrate compatible Orbit Handoff project state to Orbit Thread while preserving locally edited managed files.
