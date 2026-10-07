@@ -72,3 +72,23 @@ test('doctor flags duplicate root/docs living docs', t => {
   assert.equal(result.ok, false);
   assert.equal(result.messages.some(message => message.includes('duplicate root/docs copies')), true);
 });
+
+
+test('legacy Orbit Handoff project state migrates to Orbit Thread', t => {
+  const root = fixture(t);
+  setupProject(root, ['codex']);
+  const current = path.join(root, '.orbit-thread', 'state.json');
+  const legacy = path.join(root, '.orbit-handoff', 'state.json');
+  const state = JSON.parse(fs.readFileSync(current, 'utf8'));
+  state.product = 'orbit-handoff';
+  state.schema = 2;
+  fs.mkdirSync(path.dirname(legacy), { recursive: true });
+  fs.writeFileSync(legacy, JSON.stringify(state));
+  fs.unlinkSync(current);
+
+  setupProject(root, ['codex']);
+  assert.equal(fs.existsSync(current), true);
+  assert.equal(fs.existsSync(legacy), false);
+  assert.equal(JSON.parse(fs.readFileSync(current, 'utf8')).product, 'orbit-thread');
+  assert.match(fs.readFileSync(path.join(root, 'AGENTS.md'), 'utf8'), /orbit-thread:start/);
+});
