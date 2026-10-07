@@ -39,7 +39,7 @@ for (const agent of ['codex', 'claude', 'both']) {
       assert.equal(read(location(root, a), 'personal-note.md'), 'keep me');
       assert.equal(fs.existsSync(path.join(location(root, a), 'personal-empty-folder')), true);
       assert.equal(fs.existsSync(path.join(location(root, a), 'SKILL.md')), false);
-      assert.equal(fs.existsSync(path.join(location(root, a), '.orbit-handoff.json')), false);
+      assert.equal(fs.existsSync(path.join(location(root, a), '.orbit-thread.json')), false);
     });
     ok(run(root, 'uninstall', '--agent', agent, '--yes'));
   });
@@ -48,7 +48,7 @@ for (const agent of ['codex', 'claude', 'both']) {
 test('Codex and Claude copies including ownership metadata are byte-identical', t => {
   const root = fixture(t);
   ok(run(root, 'install', '--yes'));
-  for (const name of ['SKILL.md', 'agents/openai.yaml', 'scripts/write_handoff.sh', '.orbit-handoff.json']) assert.deepEqual(fs.readFileSync(path.join(location(root, 'codex'), name)), fs.readFileSync(path.join(location(root, 'claude'), name)));
+  for (const name of ['SKILL.md', 'agents/openai.yaml', 'scripts/write_handoff.sh', '.orbit-thread.json']) assert.deepEqual(fs.readFileSync(path.join(location(root, 'codex'), name)), fs.readFileSync(path.join(location(root, 'claude'), name)));
 });
 
 test('init preserves existing content, adds a single block, ignores only intended state, and uninstall restores bytes', t => {
@@ -194,9 +194,9 @@ test('malicious ownership paths cannot escape installation', t => {
   const root = fixture(t);
   ok(run(root, 'install', '--agent', 'codex', '--yes'));
   const dir = location(root, 'codex');
-  const manifest = JSON.parse(read(dir, '.orbit-handoff.json'));
+  const manifest = JSON.parse(read(dir, '.orbit-thread.json'));
   manifest.files['../../outside.txt'] = 'a'.repeat(64);
-  fs.writeFileSync(path.join(dir, '.orbit-handoff.json'), JSON.stringify(manifest));
+  fs.writeFileSync(path.join(dir, '.orbit-thread.json'), JSON.stringify(manifest));
   assert.equal(run(root, 'uninstall', '--agent', 'codex', '--yes').status, 1);
   assertSkill(dir);
 });
@@ -204,6 +204,13 @@ test('malicious ownership paths cannot escape installation', t => {
 test('update migrates unchanged files from an older managed package and preserves unrelated files', t => {
   const root = fixture(t);
   ok(run(root, 'install', '--agent', 'codex', '--yes'));
+  const installed = location(root, 'codex');
+  const currentMarker = path.join(installed, '.orbit-thread.json');
+  const legacyMarker = path.join(installed, '.orbit-handoff.json');
+  const legacyState = JSON.parse(fs.readFileSync(currentMarker, 'utf8'));
+  legacyState.product = 'orbit-handoff';
+  fs.writeFileSync(legacyMarker, JSON.stringify(legacyState));
+  fs.unlinkSync(currentMarker);
   const newer = path.join(root, 'newer-package');
   fs.mkdirSync(newer);
   const repo = fileURLToPath(new URL('../', import.meta.url));
@@ -216,7 +223,8 @@ test('update migrates unchanged files from an older managed package and preserve
   const result = spawnSync(process.execPath, [path.join(newer, 'bin/orbit-handoff.mjs'), 'update', '--agent', 'codex', '--yes'], { cwd: root, encoding: 'utf8' });
   ok(result);
   assert.equal(read(location(root, 'codex'), 'SKILL.md').endsWith('Release fixture guidance.\n'), true);
-  assert.equal(JSON.parse(read(location(root, 'codex'), '.orbit-handoff.json')).version, '1.0.1');
+  assert.equal(JSON.parse(read(location(root, 'codex'), '.orbit-thread.json')).version, '1.0.1');
+  assert.equal(fs.existsSync(path.join(location(root, 'codex'), '.orbit-handoff.json')), false);
   assert.equal(read(location(root, 'codex'), 'my-notes.txt'), 'preserve');
 });
 

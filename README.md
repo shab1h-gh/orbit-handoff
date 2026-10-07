@@ -194,7 +194,7 @@ npx orbit-thread doctor
 
 It checks the managed skill installation and project continuity setup, including living docs, config, managed agent blocks, Git-ignore rules, duplicate root/docs files and handoff size.
 
-`npx orbit-thread check` remains an alias.
+`npx orbit-thread check` remains the lightweight managed-skill installation check kept for Orbit Handoff compatibility; use `doctor` for the full project health check.
 
 ## Installation
 
