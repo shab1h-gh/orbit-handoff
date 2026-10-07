@@ -92,3 +92,16 @@ test('legacy Orbit Handoff project state migrates to Orbit Thread', t => {
   assert.equal(JSON.parse(fs.readFileSync(current, 'utf8')).product, 'orbit-thread');
   assert.match(fs.readFileSync(path.join(root, 'AGENTS.md'), 'utf8'), /orbit-thread:start/);
 });
+
+
+test('resetting subagent preferences preserves the configured maximum', t => {
+  const root = fixture(t);
+  setupProject(root, ['codex','claude']);
+  configureProject(root, { agent: 'claude', model: 'Claude Sonnet 5.5', reasoning: 'low', maxSubagents: 1 });
+  configureProject(root, { agent: 'codex', model: 'GPT-6.1 Sol', reasoning: 'high' });
+  configureProject(root, { resetSubagents: true });
+  const config = readProjectConfig(root);
+  assert.equal(config.subagents.max, 1);
+  assert.deepEqual(config.subagents.claude, { model: null, reasoning: null });
+  assert.deepEqual(config.subagents.codex, { model: null, reasoning: null });
+});
