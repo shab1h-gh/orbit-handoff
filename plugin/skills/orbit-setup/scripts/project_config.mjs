@@ -86,7 +86,7 @@ export function renderSubagentBlock(config) {
   if (config.subagents.max === 0) {
     lines.push('- Subagents are disabled for this project.');
   } else {
-    lines.push(`- Subagents: default to none. Use at most ${config.subagents.max} total/concurrently, only for genuinely separable work where isolated context materially helps. No recursive subagents. The main agent owns integration and final decisions.`);
+    lines.push(`- Subagents: default to none. Use at most ${config.subagents.max} total/concurrently, only for genuinely separable work where isolated context materially helps. Give each subagent a narrow scope, avoid duplicate repository reads, and require concise findings. No recursive subagents. The main agent owns integration and final decisions.`);
     for (const agent of agents) {
       const pref = config.subagents[agent];
       if (!pref.model && !pref.reasoning) continue;
@@ -130,8 +130,11 @@ export function configureProject(root, { agent, maxSubagents, model, reasoning, 
 
   let config = readProjectConfig(root);
   if (resetSubagents) {
-    if (agent && agents.includes(agent)) config.subagents[agent] = { model: null, reasoning: null };
-    else config = defaultConfig();
+    if (agent && agents.includes(agent)) {
+      config.subagents[agent] = { model: null, reasoning: null };
+    } else {
+      for (const name of agents) config.subagents[name] = { model: null, reasoning: null };
+    }
   }
   if (maxSubagents !== undefined) {
     const value = Number(maxSubagents);
