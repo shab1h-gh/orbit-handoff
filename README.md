@@ -250,7 +250,7 @@ The GitHub marketplace route is separate from Anthropic's official public direct
 | `npx orbit-thread@latest update` | Upgrade unchanged managed skill files. |
 | `npx orbit-thread uninstall` | Remove managed skills/instruction blocks while preserving project-owned docs/config/state. |
 | `npx orbit-thread init` | Backwards-compatible alias for `setup`. |
-| `npx orbit-thread check` | Alias for `doctor`. |
+| `npx orbit-thread check` | Check managed skill installation (kept for Orbit Handoff compatibility). |
 
 Common options:
 
