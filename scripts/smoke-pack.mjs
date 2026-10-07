@@ -37,7 +37,10 @@ try {
 
   for (const agentDir of ['.agents', '.claude']) {
     for (const skill of ['handoff', 'orbit-setup']) {
-      assert.equal(fs.existsSync(path.join(project, agentDir, 'skills', skill, 'SKILL.md')), true);
+      const skillDir = path.join(project, agentDir, 'skills', skill);
+      assert.equal(fs.existsSync(path.join(skillDir, 'SKILL.md')), true);
+      assert.equal(fs.existsSync(path.join(skillDir, '.orbit-thread.json')), true);
+      assert.equal(fs.existsSync(path.join(skillDir, '.orbit-handoff.json')), false);
     }
   }
   for (const doc of ['PRODUCT.md', 'DESIGN.md', 'ARCHITECTURE.md', 'SECURITY.md', 'ROADMAP.md']) {
