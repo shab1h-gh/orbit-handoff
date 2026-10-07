@@ -114,51 +114,66 @@ release. The original CI result above covers v1.0.0; it is not a new 1.0.1 CI cl
 
 ## v1.1.0 feature validation
 
-Validation work for the Orbit Setup feature release began on 6 October 2026.
+Validation completed on 7 October 2026 for the Orbit Thread feature release.
 
-### Focused local checks completed
+### Verified in GitHub CI
 
-A disposable local fixture exercised the new dual-skill/setup implementation:
+The final feature-branch workflow passed on macOS and Linux with Node.js 20 and 24.
 
-- Orbit Setup creates missing PRODUCT, DESIGN, ARCHITECTURE, SECURITY and ROADMAP
-  living-doc templates.
-- Existing equivalent project docs and unrelated AGENTS.md content are preserved.
-- Repeated setup is idempotent and does not duplicate managed blocks.
-- Setup works before Git is initialised by treating the current directory as the
-  project root.
-- HANDOFF-STATE.md is not created by setup.
-- The updated dual-skill manifest/metadata validation passed locally.
-- The portable plugin packager built `orbit-handoff-plugin-1.1.0.zip` locally
-  with both skill entrypoints present.
-- Eight focused local setup/runtime checks passed in the isolated validation
-  fixture used while preparing the feature branch.
+The workflow verified:
 
-The feature branch's full GitHub CI matrix passed on macOS and Linux with Node.js
-20 and 24 after the setup migration fix. Each job ran the repository test suite,
-package validation, public-source scan, plugin ZIP build and npm pack dry run.
-The suite now contains 29 tests, including the new setup/idempotency cases.
+- the complete Node test suite;
+- package/manifest validation;
+- public/privacy source scanning;
+- deterministic OpenAI/plugin ZIP generation;
+- `npm pack`;
+- a packed-tarball smoke test in a disposable Git repository.
 
-A packed npm-tarball smoke test, current Claude native plugin validation, Codex
-native skill discovery and public-registry smoke test are still required before
-v1.1.0 is published/tagged.
+The packed smoke test exercised the actual `orbit-thread-1.1.0.tgz` through:
 
-### Invocation-policy change
+- install for Codex and Claude;
+- setup;
+- Claude and Codex subagent configuration;
+- doctor;
+- update;
+- uninstall;
+- preservation of living project docs/config after uninstall.
 
-The v1.1.0 canonical handoff skill intentionally removes Claude's
-`disable-model-invocation: true` and sets OpenAI skill metadata
+It also verified both canonical skills, the expected living-document templates, `.orbit-thread/config.json`, and that setup does not create `HANDOFF-STATE.md`.
+
+### Behaviour verified by tests
+
+Coverage includes:
+
+- Orbit Setup creation/idempotency and preservation of existing project docs/instructions;
+- selective project state and Git-ignore management;
+- Orbit Handoff → Orbit Thread project-state migration;
+- managed skill ownership/update/uninstall safeguards;
+- subagent model/reasoning configuration and AGENTS.md reflection;
+- doctor detection of duplicate root/docs living documents;
+- Handoff atomic overwrite, 50-line limit, secret-pattern rejection, failure preservation and no Git/network mutation.
+
+### Invocation policy
+
+The canonical Handoff skill intentionally omits Claude's former
+`disable-model-invocation: true` restriction and keeps OpenAI metadata
 `allow_implicit_invocation: true`.
 
-This allows a configured project's AGENTS.md/CLAUDE.md rules to request a handoff
-proactively after meaningful verified milestones and completed coding tasks. The
-skill remains manually invokable as `$handoff` / `/handoff` as before.
+Configured Orbit Thread projects therefore permit proactive checkpoints after meaningful verified milestones and completed coding tasks, while manual `$handoff` / `/handoff` invocation remains supported.
 
-Orbit Setup is separately exposed as `$orbit-setup` / `/orbit-setup` for
-standalone installs and as the corresponding namespaced command in the Claude
-plugin.
+Orbit Setup remains separately exposed as `$orbit-setup` / `/orbit-setup`.
 
-### Provider-directory status
+### Remaining release-gate checks
 
-Provider review state is not inferable from this repository. OpenAI and
-Anthropic publisher dashboards are authoritative for any submission already made.
-GitHub/npm availability and local validation do not imply public-directory
-approval.
+Before publishing/tagging v1.1.0:
+
+- validate the final plugin with a current Claude Code installation using `claude plugin validate`;
+- verify native Claude and Codex skill discovery against the final package where those CLIs are available;
+- publish `orbit-thread@1.1.0` and repeat the public-registry smoke test.
+
+Those native CLIs are not part of GitHub CI, so CI success does not claim those checks.
+
+### Provider directories
+
+OpenAI and Anthropic public-directory review is separate from npm/GitHub distribution. Their publisher dashboards are authoritative after submission; local validation does not imply approval.
+
