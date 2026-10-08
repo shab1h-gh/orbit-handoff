@@ -148,6 +148,8 @@ The writer validates before replacing the previous handoff, rejects obvious secr
 
 Orbit Thread defaults to **no subagents unless they genuinely help**, with a maximum of two and no recursive subagents.
 
+Use `configure` to set the project-wide helper limit and optional per-agent model/reasoning preferences. Orbit Thread records these as project preferences; it does not spawn subagents itself.
+
 You can save project-specific model/reasoning preferences without hand-editing `AGENTS.md`:
 
 ```sh
@@ -158,10 +160,10 @@ npx orbit-thread configure --agent codex \
   --model "GPT-6.1 Sol" --reasoning high
 ```
 
-Change the maximum:
+Set the maximum number of subagents (0–2):
 
 ```sh
-npx orbit-thread configure --max-subagents 1
+npx orbit-thread configure --max-subagents 2
 ```
 
 Disable subagents:
@@ -186,13 +188,15 @@ Preferences are stored in `.orbit-thread/config.json` and reflected in Orbit Thr
 
 ## Project doctor
 
-Run:
+Run `doctor` after setup/update/configuration changes, on a fresh clone, or whenever Orbit Thread recovery/configuration looks inconsistent:
 
 ```sh
-npx orbit-thread doctor
+npx orbit-thread doctor --agent both --scope project
 ```
 
-It checks the managed skill installation and project continuity setup, including living docs, config, managed agent blocks, Git-ignore rules, duplicate root/docs files and handoff size.
+Use `--agent codex` or `--agent claude` when only one workflow is installed.
+
+It checks the managed skill installation and project continuity setup, including living docs, config, managed agent blocks, Git-ignore rules, duplicate root/docs files and handoff size. A non-zero doctor result means Orbit Thread's continuity setup needs attention; it does **not** by itself mean your application or deployment is broken.
 
 `npx orbit-thread check` remains the lightweight managed-skill installation check kept for Orbit Handoff compatibility; use `doctor` for the full project health check.
 
@@ -292,6 +296,74 @@ npx orbit-thread@latest setup --agent both --yes
 The first command updates unchanged managed skill files. The second updates the project-managed rules and creates only missing living docs.
 
 Locally edited managed skill files are never force-overwritten.
+
+## FAQ and troubleshooting
+
+### Doctor says `AGENTS.md` or `CLAUDE.md` has a missing/edited managed block. Is my app broken?
+
+Usually not. `doctor` checks Orbit Thread's local continuity/configuration files, not your application's runtime health. A formatter such as Prettier can change whitespace inside Orbit Thread's exact managed block and trigger the integrity check even when the instructions still look equivalent.
+
+Inspect the change first:
+
+```sh
+git diff -- AGENTS.md CLAUDE.md
+```
+
+If the files contain only unintended formatter changes and no intentional edits, restore them, rerun setup, then verify:
+
+```sh
+git restore -- AGENTS.md CLAUDE.md
+npx orbit-thread setup --agent both --yes
+npx orbit-thread doctor --agent both --scope project
+```
+
+If those files also contain intentional edits, do **not** restore the whole file. Revert only the formatter-changed Orbit Thread hunk, for example with:
+
+```sh
+git restore -p -- AGENTS.md CLAUDE.md
+```
+
+Then rerun setup and doctor. If the drift is already committed, restore only the managed block from a known-good commit or the exact block recorded in local `.orbit-thread/state.json`, then rerun setup and doctor.
+
+To prevent Markdown formatters from changing the canonical blocks, exclude the managed instruction files where appropriate. For Prettier, add:
+
+```text
+AGENTS.md
+CLAUDE.md
+```
+
+to the project's `.prettierignore`.
+
+### Setup refuses to overwrite an edited, duplicated or malformed managed block
+
+This is intentional. Orbit Thread will not silently replace a block whose recorded contents no longer match, because doing so could destroy local instructions.
+
+Inspect the diff/markers, repair only the Orbit Thread-managed block, then run:
+
+```sh
+npx orbit-thread setup --agent both --yes
+npx orbit-thread doctor --agent both --scope project
+```
+
+Do not delete `.orbit-thread/state.json` or the managed markers just to bypass the check; that state is what lets Orbit Thread distinguish its own content from yours.
+
+### When should I run Handoff?
+
+Use Handoff after a meaningful verified milestone that changed repository state or durable project truth, and before clearing/ending a session when you need continuity. Skip read-only questions and trivial maintenance that does not change durable project state.
+
+Each successful handoff overwrites the previous local `HANDOFF-STATE.md`; it is not a changelog. If a handoff is rejected, keep it under 50 lines and remove secrets, credentials, personal data or other sensitive values before retrying.
+
+### What should a fresh Codex/Claude session load?
+
+Do not replay the old conversation. Recover from `HANDOFF-STATE.md` once, then current Git branch/status/diff/recent log, then only the living docs and source files needed for the recorded next action. The generated project instructions encode this order.
+
+### What if my configured subagent model is unavailable?
+
+Subagent settings in `.orbit-thread/config.json` are preferences, not hard dependencies. Keep the configured limit and use the strongest suitable available alternative rather than blocking work or hand-editing Orbit Thread's managed blocks. Confirm the current project preference with:
+
+```sh
+npx orbit-thread configure --show
+```
 
 ## Security and privacy
 
