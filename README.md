@@ -1,53 +1,90 @@
-# Orbit Thread
+# 🧵 Orbit Thread
 
-**Keep coding agents aligned across long projects without carrying a huge conversation forever.**
+**Pick up where you left off, without carrying an entire coding conversation into the next session.**
 
-[![Licence: MIT](https://img.shields.io/badge/licence-MIT-blue.svg)](LICENSE)
+[![npm version](https://img.shields.io/npm/v/orbit-thread?label=npm)](https://www.npmjs.com/package/orbit-thread)
 [![CI](https://github.com/shab1h-gh/orbit-thread/actions/workflows/ci.yml/badge.svg)](https://github.com/shab1h-gh/orbit-thread/actions/workflows/ci.yml)
+[![MIT licence](https://img.shields.io/badge/licence-MIT-blue.svg)](LICENSE)
 
-Orbit Thread is a small local continuity layer for Codex and Claude Code. It has two reusable skills:
+Orbit Thread helps **Codex** and **Claude Code** keep their place during long projects. It gives each project a small set of useful documents and saves a short handoff when the agent reaches a verified checkpoint.
 
-- **Orbit Setup** prepares a project with lightweight living documentation and token-efficient agent rules.
-- **Handoff** keeps one short `HANDOFF-STATE.md` current so a fresh session can resume from verified state instead of replaying a large chat history.
+No giant session diary. No separate account or hosted memory service. Your repository and Git history remain the source of truth.
 
-Tracked source, Git history and living project docs remain authoritative. The handoff is current execution state, not a changelog.
+| Skill | What it does |
+| --- | --- |
+| 🧭 **Orbit Setup** | Prepares project docs, agent instructions and optional subagent preferences. |
+| 🔁 **Handoff** | Records the current objective, completed work, risks and next actions in `HANDOFF-STATE.md`. |
+
+**Jump to:** [Quick start](#quick-start) · [How it works](#how-it-works) · [Setup files](#what-setup-creates) · [Handoff](#handoff-and-recovery) · [Subagents](#configure-subagents) · [Doctor](#check-your-setup) · [Commands](#command-reference) · [Help](#troubleshooting)
 
 ## Quick start
 
-From the project you want to configure:
+> 🚀 Run these commands **inside the project** you want to set up.
 
-```sh
+```bash
 npx orbit-thread install
 npx orbit-thread setup
 ```
 
-Choose Codex, Claude Code or both when prompted.
+Choose Codex, Claude Code or both when prompted. To skip the questions:
 
-Non-interactive:
-
-```sh
+```bash
 npx orbit-thread install --agent both --scope project --yes
 npx orbit-thread setup --agent both --yes
 ```
 
-Then use the skills directly:
+Once installed, call the skills in your coding agent:
 
-| Agent | Setup | Handoff |
+| Where you're working | Set up a project | Save a handoff |
 | --- | --- | --- |
-| Codex standalone | `$orbit-setup` | `$handoff` |
-| Claude Code standalone | `/orbit-setup` | `/handoff` |
-| Claude plugin | `/orbit-thread:orbit-setup` | `/orbit-thread:handoff` |
+| Codex | `$orbit-setup` | `$handoff` |
+| Claude Code | `/orbit-setup` | `/handoff` |
+| Claude marketplace plugin | `/orbit-thread:orbit-setup` | `/orbit-thread:handoff` |
 
-## What Orbit Setup creates
+The commands above are **skill invocations**, not Terminal commands. You can also ask the agent to run a handoff after a verified milestone.
 
-Orbit Setup is designed to run before the first substantial coding prompt, or later to upgrade an existing project.
+## How it works
 
-If equivalent files do not already exist, it creates:
+Orbit Thread keeps **lasting project knowledge** separate from **what the agent is doing right now**.
+
+```text
+Existing project
+      │
+      ▼
+Orbit Setup
+      │
+      ├── Living docs and agent instructions
+      └── Project preferences
+      │
+      ▼
+Agent completes verified work
+      │
+      ▼
+Handoff rewrites HANDOFF-STATE.md
+      │
+      ▼
+Next session checks handoff + Git + relevant docs
+      │
+      ▼
+Continue from the last verified point
+```
+
+The important distinction:
+
+- **Git** keeps the history of code and decisions.
+- **Living docs** describe the project as it stands today.
+- **`HANDOFF-STATE.md`** says where the current task stands and what needs doing next.
+
+The handoff is a checkpoint, **not** another changelog or a substitute for Git. If the handoff is stale, the current repository state wins.
+
+## What setup creates
+
+Orbit Setup can prepare a new project or add the workflow to an existing one. It creates missing files without duplicating equivalent documents already in the repository root or `docs/`.
 
 ```text
 project/
 ├── AGENTS.md
-├── CLAUDE.md                 # when Claude is selected
+├── CLAUDE.md                 # if Claude Code is selected
 ├── .orbit-thread/
 │   └── config.json           # tracked project preferences
 └── docs/
@@ -58,62 +95,37 @@ project/
     └── ROADMAP.md
 ```
 
-At the first meaningful checkpoint, Handoff creates:
+The first successful Handoff also creates `HANDOFF-STATE.md`. That file and Orbit Thread's local ownership state are ignored by Git.
 
-```text
-HANDOFF-STATE.md              # local, Git-ignored, overwrite-only
-```
+### Which document should change?
 
-Orbit Thread also keeps its small internal ownership state local and Git-ignored.
+| Work completed | Update |
+| --- | --- |
+| Product behaviour, copy or scope | `PRODUCT.md` |
+| Interface, layouts or user experience | `DESIGN.md` |
+| Runtime, data flow or integrations | `ARCHITECTURE.md` |
+| Authentication, permissions or secrets handling | `SECURITY.md` |
+| Plans that have not been implemented | `ROADMAP.md` |
 
-Existing product/design/architecture/security/roadmap files at either the repository root or under `docs/` are preserved instead of duplicated.
+The generated instructions ask coding agents to read only the documents and source files they need. After verified changes, they should **update the relevant sections in place**, not pile new notes underneath old ones.
 
-### Living-doc rules
+They also tell agents to preserve applied migrations, leave history to Git and run an appropriate check before claiming work is finished.
 
-The generated project instructions tell the agent to:
+## Handoff and recovery
 
-- load only the docs relevant to the current task;
-- inspect only the source files it actually needs;
-- keep `PRODUCT.md`, `DESIGN.md`, `ARCHITECTURE.md`, `SECURITY.md` and `ROADMAP.md` as current truth;
-- update affected sections **in place** after verified changes;
-- never append session diaries or duplicate superseded sections;
-- keep Git as history;
-- never rewrite an applied migration;
-- run the smallest relevant verification before claiming completion.
+### When to save a handoff
 
-The document-routing rules are deliberately selective:
+Handoff is intended for moments that matter:
 
-- product behaviour, copy or scope → `PRODUCT.md`
-- UI/UX → `DESIGN.md`
-- runtime, data flow, infrastructure or integrations → `ARCHITECTURE.md`
-- auth, tenancy, secrets or other security-sensitive work → `SECURITY.md`
-- future planning only → `ROADMAP.md`
+- After a verified milestone that changes the repository or lasting project information.
+- At the end of a coding task that made those changes.
+- Before clearing a session or stopping because of a usage or context warning.
 
-This keeps routine tasks from loading every project document into context.
+It is not necessary for ordinary questions or tiny edits with no lasting effect. Each successful checkpoint **replaces** the previous handoff.
 
-## Checkpoints and fresh-context recovery
+### What gets saved?
 
-Orbit Thread asks the coding agent to run Handoff:
-
-- after a meaningful verified milestone that changed repository state or durable project truth;
-- after a completed coding task with such changes, before the final reply;
-- before `/clear`, session end, or a usage/context stop when the agent receives warning.
-
-It intentionally skips read-only questions and trivial edits.
-
-Each successful checkpoint **overwrites** the previous `HANDOFF-STATE.md`. It does not grow into a development diary.
-
-After a fresh, cleared or recovered session, the generated project rules tell the agent to recover in this order:
-
-1. read `HANDOFF-STATE.md` once if present;
-2. inspect current branch/status/diff/recent Git log;
-3. load only relevant living docs;
-4. inspect only source needed for the recorded next action;
-5. preserve valid uncommitted work and continue from the highest verified milestone.
-
-## Handoff format
-
-A handoff is normally about 30 lines and has a hard cap of 50:
+Handoffs are usually around 30 lines, with a **hard limit of 50 lines**.
 
 ```markdown
 # Handoff State
@@ -121,14 +133,14 @@ A handoff is normally about 30 lines and has a hard cap of 50:
 Updated: 07-10-2026 00:30
 
 ## Current objective
-- Finish account-security settings.
+- Finish account security settings.
 
 ## Completed milestones
 - Added the settings route.
-- Connected password change and session revocation.
+- Connected password changes and session revocation.
 
 ## In progress
-- Passkey-management UI.
+- Passkey management UI.
 
 ## Open issues / risks
 - Passkey removal still needs a browser test.
@@ -142,119 +154,145 @@ Updated: 07-10-2026 00:30
 - Unit tests passed: 42/42.
 ```
 
-The writer validates before replacing the previous handoff, rejects obvious secret-like content, writes atomically, makes no network calls and does not mutate Git.
+The writer validates the replacement before saving it, checks for recognisable secret patterns and writes the file atomically. **It makes no network requests and does not change Git.** Secret detection is a safety net, not a guarantee; never put sensitive data in a handoff.
 
-## Subagent configuration
+### Starting a fresh session
 
-Orbit Thread defaults to **no subagents unless they genuinely help**, with a maximum of two and no recursive subagents.
+The project instructions ask the agent to:
 
-Use `configure` to set the project-wide helper limit and optional per-agent model/reasoning preferences. Orbit Thread records these as project preferences; it does not spawn subagents itself.
+1. Read `HANDOFF-STATE.md` once, if present.
+2. Check the branch, working tree, diff and recent Git history.
+3. Read only the relevant living docs.
+4. Inspect the source needed for the next task.
+5. Preserve valid unfinished work and continue from the latest verified point.
 
-You can save project-specific model/reasoning preferences without hand-editing `AGENTS.md`:
+You do not need to paste an old conversation into the next session.
 
-```sh
-npx orbit-thread configure --agent claude \
-  --model "Claude Sonnet 5.5" --effort low
+## Configure subagents
 
-npx orbit-thread configure --agent codex \
-  --model "GPT-6.1 Sol" --reasoning high
-```
+Orbit Thread only **records preferences**. It does not launch subagents itself.
 
-Set the maximum number of subagents (0–2):
+By default, agents should use helpers only when the work warrants them. The configured maximum is **two**, and helpers should not spawn further helpers.
 
-```sh
+**Set the limit:**
+
+```bash
 npx orbit-thread configure --max-subagents 2
 ```
 
-Disable subagents:
+**Turn subagents off:**
 
-```sh
+```bash
 npx orbit-thread configure --max-subagents 0
 ```
 
-Show configuration:
+**Save preferred models and reasoning:**
 
-```sh
+```bash
+npx orbit-thread configure --agent codex --model "GPT-6 Luna" --reasoning high
+npx orbit-thread configure --agent claude --model "Claude Sonnet 5.5" --effort medium
+```
+
+**Check the saved settings:**
+
+```bash
 npx orbit-thread configure --show
 ```
 
-Reset saved subagent preferences:
+**Reset one agent's preferences:**
 
-```sh
+```bash
 npx orbit-thread configure --agent claude --reset-subagents
 ```
 
-Preferences are stored in `.orbit-thread/config.json` and reflected in Orbit Thread's managed section of `AGENTS.md`. They are preferences rather than hard dependencies: an unavailable exact model setting should not block useful work.
+The settings live in `.orbit-thread/config.json` and are reflected in Orbit Thread's managed section of `AGENTS.md`. They are preferences, not requirements. If a named model is unavailable, the agent can use a suitable alternative.
 
-## Project doctor
+## Check your setup
 
-Run `doctor` after setup/update/configuration changes, on a fresh clone, or whenever Orbit Thread recovery/configuration looks inconsistent:
+> 🩺 **Doctor** checks Orbit Thread itself. It does not test whether your application works.
 
-```sh
+Run it after installing, updating, changing configuration or moving to a fresh checkout:
+
+```bash
 npx orbit-thread doctor --agent both --scope project
 ```
 
-Use `--agent codex` or `--agent claude` when only one workflow is installed.
+Or check each integration separately:
 
-It checks the managed skill installation and project continuity setup, including living docs, config, managed agent blocks, Git-ignore rules, duplicate root/docs files and handoff size. A non-zero doctor result means Orbit Thread's continuity setup needs attention; it does **not** by itself mean your application or deployment is broken.
+```bash
+npx orbit-thread doctor --agent codex --scope project
+npx orbit-thread doctor --agent claude --scope project
+```
 
-`npx orbit-thread check` remains the lightweight managed-skill installation check kept for Orbit Handoff compatibility; use `doctor` for the full project health check.
+Doctor checks skill versions, project configuration, managed instruction blocks, living docs, Git ignore rules and handoff size.
 
-## Installation
+**How do you know it passed?** A successful command exits with status `0`. To print a clear confirmation:
 
-Requirements:
+```bash
+npx orbit-thread doctor --agent both --scope project && echo "Orbit Thread Doctor passed"
+```
 
-- Node.js 20+
-- Git for normal repository workflows
-- a POSIX shell and standard Unix utilities for the handoff writer
+A nonzero result means the continuity setup needs attention. It does **not** necessarily mean your app or deployment is broken.
 
-macOS and Linux are supported. Native Windows is not currently supported; WSL is the expected route.
+For a quicker check of installed managed skills only:
 
-### npm / standalone Codex and Claude Code
+```bash
+npx orbit-thread check
+```
 
-```sh
+## Installation options
+
+### Requirements
+
+- **Node.js 20 or later**
+- **Git** for normal repository work
+- **POSIX shell and standard Unix tools** for the handoff writer
+
+Orbit Thread supports **macOS and Linux**. For Windows, use **WSL**; native Windows is not currently supported.
+
+### npm for Codex or Claude Code
+
+```bash
 npx orbit-thread install
 ```
 
-Project installs use:
-
-| Agent | Project location |
+| Agent | Project skill directories |
 | --- | --- |
 | Codex | `.agents/skills/handoff/` and `.agents/skills/orbit-setup/` |
 | Claude Code | `.claude/skills/handoff/` and `.claude/skills/orbit-setup/` |
 
-User/global installs use the equivalent `~/.agents/skills/` or `~/.claude/skills/` locations.
+A user level install uses the equivalent directories under `~/.agents/skills/` or `~/.claude/skills/`.
 
 ### Claude GitHub marketplace
 
-Inside Claude Code:
+In **Claude Code**, run:
 
 ```text
 /plugin marketplace add shab1h-gh/orbit-thread
 /plugin install orbit-thread@orbit-thread
 ```
 
-Equivalent shell commands:
+Or use these Terminal commands:
 
-```sh
+```bash
 claude plugin marketplace add shab1h-gh/orbit-thread
 claude plugin install orbit-thread@orbit-thread
 ```
 
-The GitHub marketplace route is separate from Anthropic's official public directory.
+This GitHub marketplace route is separate from the **official Anthropic public directory**. Installing from GitHub does not mean the plugin has been approved for that directory.
 
-## Commands
+## Command reference
 
 | Command | Purpose |
 | --- | --- |
-| `npx orbit-thread install` | Install both skills for selected agent(s). |
-| `npx orbit-thread setup` | Prepare/upgrade the current project workflow and living docs. |
-| `npx orbit-thread configure` | Configure project subagent preferences. |
-| `npx orbit-thread doctor` | Check installation and project continuity health. |
-| `npx orbit-thread@latest update` | Upgrade unchanged managed skill files. |
-| `npx orbit-thread uninstall` | Remove managed skills/instruction blocks while preserving project-owned docs/config/state. |
-| `npx orbit-thread init` | Backwards-compatible alias for `setup`. |
-| `npx orbit-thread check` | Check managed skill installation (kept for Orbit Handoff compatibility). |
+| `npx orbit-thread install` | Install the two skills for selected agents. |
+| `npx orbit-thread setup` | Prepare or update project docs and managed instructions. |
+| `npx orbit-thread configure` | Save project subagent preferences. |
+| `npx orbit-thread doctor` | Check the project's continuity setup. |
+| `npx orbit-thread check` | Check managed skill installation only. |
+| `npx orbit-thread@latest update` | Update managed skills that have not been locally changed. |
+| `npx orbit-thread uninstall` | Remove managed skills and blocks, preserving project docs and state. |
+| `npx orbit-thread init` | Older alias for `setup`. |
 
 Common options:
 
@@ -264,129 +302,134 @@ Common options:
 --yes
 ```
 
-## Migrating from Orbit Handoff 1.0.x
+### Update an existing installation
 
-Orbit Thread is the successor to **Orbit Handoff**.
-
-Existing npm-managed users should install/update through the new package name:
-
-```sh
+```bash
 npx orbit-thread@latest update --agent both --scope project --yes
 npx orbit-thread@latest setup --agent both --yes
 npx orbit-thread doctor --agent both --scope project
 ```
 
-The v1.1 CLI recognises the managed Orbit Handoff installation/state and migrates it without intentionally overwriting local edits. The old `orbit-handoff` binary name remains an alias inside the Orbit Thread package for compatibility.
+The update command protects locally edited managed skill files. Setup updates managed project instructions and creates missing living docs without replacing existing equivalents.
 
-The historical `orbit-handoff` npm releases remain immutable.
+### Moving from Orbit Handoff 1.0.x
 
-For Claude GitHub-marketplace users, update/reinstall from the renamed repository and run:
+Orbit Thread is the successor to **Orbit Handoff**. The v1.1 CLI recognises compatible older managed installations and state while preserving local edits.
 
-```text
-/orbit-thread:orbit-setup
-```
-
-## Updating Orbit Thread
-
-```sh
+```bash
 npx orbit-thread@latest update --agent both --scope project --yes
 npx orbit-thread@latest setup --agent both --yes
+npx orbit-thread doctor --agent both --scope project
 ```
 
-The first command updates unchanged managed skill files. The second updates the project-managed rules and creates only missing living docs.
+The old `orbit-handoff` binary name remains an alias inside the new package. Earlier npm releases remain unchanged.
 
-Locally edited managed skill files are never force-overwritten.
+If you installed the Claude GitHub marketplace plugin, update or reinstall it from `shab1h-gh/orbit-thread` and run `/orbit-thread:orbit-setup`.
 
-## FAQ and troubleshooting
+## Troubleshooting
 
-### Doctor says `AGENTS.md` or `CLAUDE.md` has a missing/edited managed block. Is my app broken?
+<details>
+<summary><strong>Doctor reports a changed AGENTS.md or CLAUDE.md block</strong></summary>
 
-Usually not. `doctor` checks Orbit Thread's local continuity/configuration files, not your application's runtime health. A formatter such as Prettier can change whitespace inside Orbit Thread's exact managed block and trigger the integrity check even when the instructions still look equivalent.
+A Markdown formatter can change whitespace inside an Orbit Thread managed block. That can fail the integrity check even when the text looks fine.
 
-Inspect the change first:
+Inspect the changes first:
 
-```sh
+```bash
 git diff -- AGENTS.md CLAUDE.md
 ```
 
-If the files contain only unintended formatter changes and no intentional edits, restore them, rerun setup, then verify:
+**Only if those files have no work you need to keep**, restore them and rerun setup:
 
-```sh
+```bash
 git restore -- AGENTS.md CLAUDE.md
 npx orbit-thread setup --agent both --yes
 npx orbit-thread doctor --agent both --scope project
 ```
 
-If those files also contain intentional edits, do **not** restore the whole file. Revert only the formatter-changed Orbit Thread hunk, for example with:
+If you have intentional edits, do **not** restore the whole files. Repair only the affected managed block, then rerun setup and Doctor. Consider excluding `AGENTS.md` and `CLAUDE.md` from Prettier using `.prettierignore`.
 
-```sh
-git restore -p -- AGENTS.md CLAUDE.md
-```
+</details>
 
-Then rerun setup and doctor. If the drift is already committed, restore only the managed block from a known-good commit or the exact block recorded in local `.orbit-thread/state.json`, then rerun setup and doctor.
+<details>
+<summary><strong>Setup refuses to overwrite a managed block</strong></summary>
 
-To prevent Markdown formatters from changing the canonical blocks, exclude the managed instruction files where appropriate. For Prettier, add:
+That protection is deliberate. Orbit Thread will not replace a block it can no longer confirm it owns.
 
-```text
-AGENTS.md
-CLAUDE.md
-```
+Review the block and its markers, preserve your own instructions, repair the managed portion and run:
 
-to the project's `.prettierignore`.
-
-### Setup refuses to overwrite an edited, duplicated or malformed managed block
-
-This is intentional. Orbit Thread will not silently replace a block whose recorded contents no longer match, because doing so could destroy local instructions.
-
-Inspect the diff/markers, repair only the Orbit Thread-managed block, then run:
-
-```sh
+```bash
 npx orbit-thread setup --agent both --yes
 npx orbit-thread doctor --agent both --scope project
 ```
 
-Do not delete `.orbit-thread/state.json` or the managed markers just to bypass the check; that state is what lets Orbit Thread distinguish its own content from yours.
+Do not delete `.orbit-thread/state.json` or remove markers to get around the check.
 
-### When should I run Handoff?
+</details>
 
-Use Handoff after a meaningful verified milestone that changed repository state or durable project truth, and before clearing/ending a session when you need continuity. Skip read-only questions and trivial maintenance that does not change durable project state.
+<details>
+<summary><strong>My handoff was rejected</strong></summary>
 
-Each successful handoff overwrites the previous local `HANDOFF-STATE.md`; it is not a changelog. If a handoff is rejected, keep it under 50 lines and remove secrets, credentials, personal data or other sensitive values before retrying.
+Keep `HANDOFF-STATE.md` at **50 lines or fewer**. Remove credentials, tokens, keys and sensitive personal or production information, then retry. The previous successful handoff is preserved when validation fails.
 
-### What should a fresh Codex/Claude session load?
+</details>
 
-Do not replay the old conversation. Recover from `HANDOFF-STATE.md` once, then current Git branch/status/diff/recent log, then only the living docs and source files needed for the recorded next action. The generated project instructions encode this order.
+<details>
+<summary><strong>Does Orbit Thread synchronise chats across agents?</strong></summary>
 
-### What if my configured subagent model is unavailable?
+No. It keeps project documents and a local handoff that agents can read. It does not copy conversation history between Codex and Claude Code. A fresh session should check the handoff and Git rather than assume it has the earlier chat's context.
 
-Subagent settings in `.orbit-thread/config.json` are preferences, not hard dependencies. Keep the configured limit and use the strongest suitable available alternative rather than blocking work or hand-editing Orbit Thread's managed blocks. Confirm the current project preference with:
+</details>
 
-```sh
+<details>
+<summary><strong>What if a configured model is unavailable?</strong></summary>
+
+The subagent model and reasoning values are suggestions, not enforced settings. Use an appropriate available model and keep the configured helper limit.
+
+```bash
 npx orbit-thread configure --show
 ```
 
+</details>
+
+<details>
+<summary><strong>npm reports a cache permission error</strong></summary>
+
+Try the Doctor command in your normal Terminal and check npm's cache before changing any permissions:
+
+```bash
+npm config get cache
+npm cache verify
+```
+
+A restricted coding environment may report a permissions error even when your Mac's cache is healthy. Do not run npm with `sudo` or change ownership without identifying the failing path.
+
+</details>
+
 ## Security and privacy
 
-Orbit Thread is local-first.
+> 🔒 Orbit Thread's handoff writer runs locally. It does not send files to an Orbit Thread service, collect telemetry or alter Git.
 
-The handoff writer makes no network calls and does not mutate Git. Secret detection is a backstop, not a data-loss-prevention system, so never place credentials, personal data or sensitive production information in handoffs or project docs.
+The installer protects unmanaged skills and locally modified managed files. Setup leaves unrelated instructions and existing project documents alone.
 
-The installer refuses unmanaged skill collisions and protects locally modified managed files. Setup preserves unrelated instructions and existing project docs.
+The secret checker catches some recognisable patterns, **not every type of sensitive information**. Do not include passwords, API keys, recovery codes, personal data or production secrets in handoffs or living docs.
 
-There is no Orbit Thread telemetry. npm, GitHub, Claude and OpenAI still operate under their own service/privacy policies.
+Installing packages or using a coding agent can still involve **npm, GitHub, OpenAI or Anthropic** under those providers' own terms and privacy policies.
 
-See [SECURITY.md](SECURITY.md) and [PRIVACY.md](PRIVACY.md).
+Read [Security](SECURITY.md) and [Privacy](PRIVACY.md) for the details.
 
 ## Provider directories
 
-The repository includes a portable skills-only plugin ZIP suitable for OpenAI's plugin upload flow and a Claude plugin manifest suitable for Anthropic/GitHub distribution.
+The repository includes a portable skills plugin ZIP for the OpenAI upload flow and a Claude plugin manifest for Anthropic and GitHub distribution.
 
-Public OpenAI and Anthropic directory approval is separate from npm/GitHub installation. See [docs/SUBMISSION.md](docs/SUBMISSION.md).
+**Submission, approval and publication are separate steps.** A working npm or GitHub installation does not establish that a plugin is publicly listed by OpenAI or Anthropic. See [directory submission notes](docs/SUBMISSION.md).
 
 ## Contributing
 
-Issues and focused pull requests are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md).
+Bug reports, documentation improvements and focused pull requests are welcome.
+
+See [CONTRIBUTING.md](CONTRIBUTING.md), or [open an issue](https://github.com/shab1h-gh/orbit-thread/issues).
 
 ## Licence
 
-[MIT](LICENSE) — Shabih Anwar.
+[MIT](LICENSE). Created by **Shabih Anwar**.
